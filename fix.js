@@ -13,7 +13,7 @@ const COMPOSER_ORDER = [
 const COMPOSER_ALIASES = {
   'Abdülkadir Merâgî':['abdulkadir meragi','meragi'],'Gazi Giray Han':['gazi giray'],'Hafız Post':['hafiz post'],
   'Buhurizade Mustafa Itrî':['itri'],'Kantemiroğlu':['kantemiroglu','kantemir','cantemir'],'Tanburi Mustafa Çavuş':['mustafa cavus','tanburi mustafa'],
-  'Zaharya':['zaharya'],'Ebubekir Ağa':['ebubekir','bekir aga','eyyubi bekir'],'Dilhayat Kalfa':['dilhayat'],'Tab’î Mustafa Efendi':['tabi mustafa','tabi'],
+  'Zaharya':['zaharya'],'Ebubir Ağa':['ebubekir','bekir aga','eyyubi bekir'],'Dilhayat Kalfa':['dilhayat'],'Tab’î Mustafa Efendi':['tabi mustafa','tabi'],
   'Tanburi İsak':['tanburi isak','isak'],'III. Selim':['iii selim','selim han','sultan selim','selim'],'Küçük Mehmed Ağa':['kucuk mehmed','kucuk mehmet'],
   'Abdülbaki Nasır Dede':['abdulbaki nasir','nasir dede'],'İsmail Dede Efendi':['ismail dede','dede efendi'],'Dellalzade İsmail Efendi':['dellalzade'],
   'Kazasker Mustafa İzzet Efendi':['kazasker mustafa izzet','mustafa izzet'],'Tanburi Büyük Osman Bey':['buyuk osman','tanburi buyuk osman'],'Zekai Dede':['zekai'],
@@ -75,4 +75,44 @@ playlists = async function(){
   s.innerHTML='<option value="">Liste seç</option>'+all.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
   if(previous&&all.some(p=>p.id===previous)) s.value=previous;
   if(!before.startsWith('Bitti.')) status(all.length+' playlist bulundu.','ok');
+};
+
+/* Spotify can intermittently return 5xx during long search runs. Retry those automatically. */
+api = async function(path,opt={},attempt=0){
+  let tk=await token();
+  if(!tk) throw new Error('Önce Spotify’a bağlan.');
+  const run=()=>fetch('https://api.spotify.com/v1'+path,{...opt,headers:{Authorization:'Bearer '+tk,'Content-Type':'application/json',...(opt.headers||{})}});
+  let r;
+  try{ r=await run(); }
+  catch(err){
+    if(attempt<6){
+      const wait=Math.min(12000,1500*Math.pow(2,attempt));
+      status(`Spotify bağlantısı kısa süreli kesildi. ${Math.ceil(wait/1000)} sn sonra otomatik tekrar deneniyor...`,'warn');
+      await sleep(wait);
+      return api(path,opt,attempt+1);
+    }
+    throw err;
+  }
+  if(r.status===401){
+    tk=await refresh();
+    r=await run();
+  }
+  if(r.status===429 && attempt<6){
+    const sec=Math.max(1,Number(r.headers.get('Retry-After'))||2);
+    status(`Spotify kısa bir mola istedi. ${sec} sn bekleniyor...`,'warn');
+    await sleep(sec*1000);
+    return api(path,opt,attempt+1);
+  }
+  if([500,502,503,504].includes(r.status) && attempt<6){
+    const wait=Math.min(12000,1500*Math.pow(2,attempt));
+    status(`Spotify geçici ${r.status} hatası verdi. ${Math.ceil(wait/1000)} sn sonra otomatik tekrar deneniyor...`,'warn');
+    await sleep(wait);
+    return api(path,opt,attempt+1);
+  }
+  if(!r.ok){
+    const tx=await r.text();
+    throw new Error('Spotify API '+r.status+': '+tx);
+  }
+  if(r.status===204) return null;
+  return r.json();
 };
