@@ -13,7 +13,7 @@ const COMPOSER_ORDER = [
 const COMPOSER_ALIASES = {
   'Abdülkadir Merâgî':['abdulkadir meragi','meragi'],'Gazi Giray Han':['gazi giray'],'Hafız Post':['hafiz post'],
   'Buhurizade Mustafa Itrî':['itri'],'Kantemiroğlu':['kantemiroglu','kantemir','cantemir'],'Tanburi Mustafa Çavuş':['mustafa cavus','tanburi mustafa'],
-  'Zaharya':['zaharya'],'Ebubir Ağa':['ebubekir','bekir aga','eyyubi bekir'],'Dilhayat Kalfa':['dilhayat'],'Tab’î Mustafa Efendi':['tabi mustafa','tabi'],
+  'Zaharya':['zaharya'],'Ebubekir Ağa':['ebubekir','bekir aga','eyyubi bekir'],'Dilhayat Kalfa':['dilhayat'],'Tab’î Mustafa Efendi':['tabi mustafa','tabi'],
   'Tanburi İsak':['tanburi isak','isak'],'III. Selim':['iii selim','selim han','sultan selim','selim'],'Küçük Mehmed Ağa':['kucuk mehmed','kucuk mehmet'],
   'Abdülbaki Nasır Dede':['abdulbaki nasir','nasir dede'],'İsmail Dede Efendi':['ismail dede','dede efendi'],'Dellalzade İsmail Efendi':['dellalzade'],
   'Kazasker Mustafa İzzet Efendi':['kazasker mustafa izzet','mustafa izzet'],'Tanburi Büyük Osman Bey':['buyuk osman','tanburi buyuk osman'],'Zekai Dede':['zekai'],
