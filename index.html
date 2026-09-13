@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Murat Spotify Manager</title>
 <style>
-:root{font-family:Inter,system-ui,Arial,sans-serif;color-scheme:dark}body{margin:0;background:#0f0f10;color:#f5f5f5}.wrap{max-width:900px;margin:auto;padding:28px 18px 70px}.card{background:#18181b;border:1px solid #2b2b31;border-radius:18px;padding:18px;margin:14px 0}h1{font-size:32px;margin:10px 0 6px}.muted{color:#aaa}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}button,select,input,textarea{font:inherit;border-radius:12px;border:1px solid #38383f;background:#222226;color:#fff;padding:11px 13px}button{cursor:pointer;font-weight:700}button.primary{background:#1ed760;color:#06140b;border:0}button.danger{background:#3a1717;border-color:#6c2929}button:disabled{opacity:.45;cursor:not-allowed}select,input{min-width:240px}textarea{width:100%;box-sizing:border-box;min-height:210px;resize:vertical}.status{white-space:pre-wrap;background:#101012;border-radius:12px;padding:12px;min-height:28px}.ok{color:#78f5a5}.warn{color:#ffd479}.small{font-size:13px}.pill{display:inline-block;background:#25252a;padding:5px 9px;border-radius:999px;margin-left:8px}.spacer{height:4px}
+:root{font-family:Inter,system-ui,Arial,sans-serif;color-scheme:dark}body{margin:0;background:#0f0f10;color:#f5f5f5}.wrap{max-width:900px;margin:auto;padding:28px 18px 70px}.card{background:#18181b;border:1px solid #2b2b31;border-radius:18px;padding:18px;margin:14px 0}h1{font-size:32px;margin:10px 0 6px}h2{margin-top:0}.muted{color:#aaa}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}button,select,input,textarea{font:inherit;border-radius:12px;border:1px solid #38383f;background:#222226;color:#fff;padding:11px 13px}button{cursor:pointer;font-weight:700}button.primary{background:#1ed760;color:#06140b;border:0}button.danger{background:#3a1717;border-color:#6c2929}button:disabled{opacity:.45;cursor:not-allowed}select,input{min-width:240px}textarea{width:100%;box-sizing:border-box;min-height:170px;resize:vertical}.status{white-space:pre-wrap;background:#101012;border-radius:12px;padding:12px;min-height:28px}.ok{color:#78f5a5}.warn{color:#ffd479}.small{font-size:13px}.pill{display:inline-block;background:#25252a;padding:5px 9px;border-radius:999px;margin-left:8px}.hero{border:1px solid #245c36;background:#14251a}.hero .primary{font-size:17px;padding:14px 18px}
 </style>
 </head>
 <body><main class="wrap">
@@ -18,7 +18,6 @@
     <button id="disconnect">Bağlantıyı kaldır</button>
     <span id="who" class="muted">Bağlı değil</span>
   </div>
-  <p class="small muted">Bu uygulama Client Secret kullanmaz. Spotify PKCE ile çalışır. Yetki anahtarları yalnız bu tarayıcıda saklanır.</p>
 </section>
 
 <section class="card">
@@ -27,58 +26,35 @@
     <select id="playlist"><option value="">Önce Spotify'a bağlan</option></select>
     <button id="reload">Listeleri yenile</button>
   </div>
-  <div class="spacer"></div>
-  <div class="row">
+  <div class="row" style="margin-top:10px">
     <input id="newName" placeholder="Yeni liste adı" />
     <button id="create">Yeni liste oluştur</button>
   </div>
 </section>
 
-<section class="card">
-  <h2>2. Parçaları yapıştır</h2>
-  <p class="muted small">Her satıra bir Spotify parça URI'si veya Spotify parça bağlantısı. Sıra burada nasılsa Spotify'da da öyle olur.</p>
-  <textarea id="items" placeholder="spotify:track:...\nhttps://open.spotify.com/track/...\nspotify:track:..."></textarea>
+<section class="card hero">
+  <h2>2. Klasik Türk Müziği Antolojisi</h2>
+  <p class="muted">15. yüzyıldan 1950'lere doğru tarihsel sırayla ilerler. Spotify kayıt tarihine göre değil, eser ve besteci dönemine göre sıralanır.</p>
+  <button id="anthology" class="primary">Antolojiyi seçili listeye kur</button>
+  <p class="small muted">Parçaları Spotify kendi kataloğunda bulur. 100'lük yazma sınırı gerektiğinde otomatik bölünür.</p>
+</section>
+
+<details class="card">
+  <summary><strong>Elle parça ekleme araçları</strong></summary>
+  <p class="muted small">Bunları kullanmak zorunda değilsin.</p>
+  <textarea id="items" placeholder="spotify:track:...\nhttps://open.spotify.com/track/..."></textarea>
   <div class="row" style="margin-top:10px">
     <span id="count" class="pill">0 parça</span>
-    <button id="replace" class="primary">Seçili listeyi bununla değiştir</button>
+    <button id="replace">Seçili listeyi bununla değiştir</button>
     <button id="append">Listenin sonuna ekle</button>
     <button id="clear" class="danger">Listeyi boşalt</button>
   </div>
-</section>
+</details>
 
 <section class="card">
   <h2>Durum</h2>
   <div id="status" class="status muted">Hazır.</div>
 </section>
 </main>
-<script>
-const CLIENT_ID='b69eccc6d93e42b5bd9e78d9d3edba99';
-const SCOPES=['user-read-private','playlist-read-private','playlist-read-collaborative','playlist-modify-private','playlist-modify-public'].join(' ');
-const $=id=>document.getElementById(id);
-const status=(t,cls='')=>{$('status').className='status '+cls;$('status').textContent=t};
-const redirectUri=()=>location.origin+location.pathname;
-const store={get:()=>{try{return JSON.parse(localStorage.getItem('spotify_tokens')||'null')}catch{return null}},set:x=>localStorage.setItem('spotify_tokens',JSON.stringify(x)),clear:()=>localStorage.removeItem('spotify_tokens')};
-
-function randomString(n=64){const a='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';let s='';const b=new Uint8Array(n);crypto.getRandomValues(b);for(const x of b)s+=a[x%a.length];return s}
-function base64url(buf){return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
-async function challenge(v){return base64url(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)))}
-async function connect(){const verifier=randomString();sessionStorage.setItem('pkce_verifier',verifier);const ch=await challenge(verifier);const u=new URL('https://accounts.spotify.com/authorize');u.searchParams.set('client_id',CLIENT_ID);u.searchParams.set('response_type','code');u.searchParams.set('redirect_uri',redirectUri());u.searchParams.set('scope',SCOPES);u.searchParams.set('code_challenge_method','S256');u.searchParams.set('code_challenge',ch);location.href=u.toString()}
-async function exchange(code){const verifier=sessionStorage.getItem('pkce_verifier');if(!verifier)throw new Error('PKCE doğrulama anahtarı bulunamadı. Tekrar bağlan.');const body=new URLSearchParams({client_id:CLIENT_ID,grant_type:'authorization_code',code,redirect_uri:redirectUri(),code_verifier:verifier});const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});if(!r.ok)throw new Error('Spotify token hatası: '+await r.text());const j=await r.json();store.set({...j,expires_at:Date.now()+j.expires_in*1000});sessionStorage.removeItem('pkce_verifier');history.replaceState({},'',location.pathname);return j}
-async function refresh(){const t=store.get();if(!t?.refresh_token)throw new Error('Spotify bağlantısı yok.');const body=new URLSearchParams({client_id:CLIENT_ID,grant_type:'refresh_token',refresh_token:t.refresh_token});const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});if(!r.ok)throw new Error('Oturum yenilenemedi. Tekrar Spotify\'a bağlan.');const j=await r.json();const n={...t,...j,refresh_token:j.refresh_token||t.refresh_token,expires_at:Date.now()+j.expires_in*1000};store.set(n);return n.access_token}
-async function token(){const t=store.get();if(!t)return null;if(Date.now()<((t.expires_at||0)-60000))return t.access_token;return refresh()}
-async function api(path,opt={}){let tk=await token();if(!tk)throw new Error('Önce Spotify’a bağlan.');const run=()=>fetch('https://api.spotify.com/v1'+path,{...opt,headers:{Authorization:'Bearer '+tk,'Content-Type':'application/json',...(opt.headers||{})}});let r=await run();if(r.status===401){tk=await refresh();r=await run()}if(!r.ok){const tx=await r.text();throw new Error('Spotify API '+r.status+': '+tx)}if(r.status===204)return null;return r.json()}
-
-async function profile(){const me=await api('/me');$('who').textContent='Bağlı: '+(me.display_name||me.id);return me}
-async function playlists(){status('Listeler yükleniyor...');let url='/me/playlists?limit=50';const all=[];while(url){const j=await api(url.replace('https://api.spotify.com/v1',''));all.push(...j.items);url=j.next}const me=await api('/me');const owned=all.filter(p=>p.owner?.id===me.id);const s=$('playlist');s.innerHTML='<option value="">Liste seç</option>'+owned.map(p=>`<option value="${p.id}">${escapeHtml(p.name)} (${p.items?.total??0})</option>`).join('');status(owned.length+' adet sana ait playlist bulundu.','ok')}
-function escapeHtml(s=''){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-function parseItems(){const out=[];for(const raw of $('items').value.split(/\s+/)){const x=raw.trim();if(!x)continue;if(/^spotify:track:[A-Za-z0-9]+$/.test(x))out.push(x);else{const m=x.match(/open\.spotify\.com\/track\/([A-Za-z0-9]+)/);if(m)out.push('spotify:track:'+m[1])}}return [...new Set(out)]}
-function updateCount(){$('count').textContent=parseItems().length+' parça'}
-async function addBatches(id,uris){for(let i=0;i<uris.length;i+=100){const batch=uris.slice(i,i+100);status(`${i+1}-${Math.min(i+100,uris.length)} / ${uris.length} ekleniyor...`);await api(`/playlists/${id}/items`,{method:'POST',body:JSON.stringify({uris:batch})})}}
-async function replaceAll(){const id=$('playlist').value;if(!id)throw new Error('Önce playlist seç.');const uris=parseItems();if(!uris.length)throw new Error('Parça listesi boş.');status(`Liste temizleniyor ve ${uris.length} parça sırayla yazılıyor...`);const first=uris.slice(0,100);await api(`/playlists/${id}/items`,{method:'PUT',body:JSON.stringify({uris:first})});if(uris.length>100)await addBatches(id,uris.slice(100));status(`Tamamlandı. ${uris.length} parça seçili listeye sırasıyla yazıldı.`,'ok');await playlists();$('playlist').value=id}
-async function appendAll(){const id=$('playlist').value;if(!id)throw new Error('Önce playlist seç.');const uris=parseItems();if(!uris.length)throw new Error('Parça listesi boş.');await addBatches(id,uris);status(`Tamamlandı. ${uris.length} parça listenin sonuna eklendi.`,'ok');await playlists();$('playlist').value=id}
-async function clearAll(){const id=$('playlist').value;if(!id)throw new Error('Önce playlist seç.');if(!confirm('Seçili playlist tamamen boşaltılsın mı?'))return;await api(`/playlists/${id}/items`,{method:'PUT',body:JSON.stringify({uris:[]})});status('Playlist boşaltıldı.','ok');await playlists();$('playlist').value=id}
-async function createPlaylist(){const name=$('newName').value.trim();if(!name)throw new Error('Yeni liste adı yaz.');const j=await api('/me/playlists',{method:'POST',body:JSON.stringify({name,public:false,description:'Murat Spotify Manager ile oluşturuldu'})});status('Yeni playlist oluşturuldu: '+j.name,'ok');$('newName').value='';await playlists();$('playlist').value=j.id}
-async function boot(){try{const qs=new URLSearchParams(location.search);if(qs.get('error'))throw new Error('Spotify yetkisi reddedildi: '+qs.get('error'));if(qs.get('code')){status('Spotify bağlantısı tamamlanıyor...');await exchange(qs.get('code'))}if(store.get()){await profile();await playlists()}else status('Spotify’a bağlanarak başla.')}catch(e){status(e.message,'warn')}}
-function safe(fn){return async()=>{try{await fn()}catch(e){status(e.message,'warn')}}}
-$('connect').onclick=connect;$('disconnect').onclick=()=>{store.clear();$('who').textContent='Bağlı değil';$('playlist').innerHTML='<option value="">Önce Spotify\'a bağlan</option>';status('Bağlantı bu tarayıcıdan kaldırıldı.');};$('reload').onclick=safe(playlists);$('replace').onclick=safe(replaceAll);$('append').onclick=safe(appendAll);$('clear').onclick=safe(clearAll);$('create').onclick=safe(createPlaylist);$('items').addEventListener('input',updateCount);boot();
-</script></body></html>
+<script src="app.js"></script>
+</body></html>
