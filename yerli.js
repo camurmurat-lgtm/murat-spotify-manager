@@ -73,30 +73,38 @@ const YERLI_CANDIDATES = [
   ['Kırıka','Kaba Saz'],
   ['Hayvanlar Alemi','Guarana Superpower'],
   ['Zen','Derya'],
-  ['Sonic Boom','Yalnızlık'],
   ['Kozmonotosman','Marmara'],
   ['Second','Rüya'],
   ['Soft Analog','Buzlar Çözülmeden'],
-  ['Sufle','Pus'],
-  ['Madrigal','Dip'],
-  ['Journers','Düş'],
-  ['Kozmik Birliktelik','Gece'],
   ['Lara Di Lara','Hazineler İçindesin'],
-  ['Melike Şahin','Diva Yorgun'],
-  ['Mabel Matiz','Toy'],
+  ['Sakin','Laleler Beyaz'],
+  ['Kafabindünya','Obi'],
+  ['Yok Öyle Kararlı Şeyler','Nefes Almak Zor'],
+  ['Eskiz','Rüyalar'],
+  ['Dengesiz Herifler','İstanbul'],
+  ['Radical Noise','Plan-B'],
+  ['Pickpocket','Falling'],
+  ['Objektif','Künye'],
+  ['Cemiyette Pişiyorum','Et Rengi'],
+  ['Dinar Bandosu','Saykodelikdeşik'],
+  ['Fairuz Derin Bulut','Arabesk'],
+  ['Haossaa','Çözülme'],
   ['BaBa ZuLa','Bir Sana Bir De Bana']
 ];
 
 const YERLI_ALIASES = {
   'camur':['camur','çamur'],
-  'baba zula':['baba zula','baba zula'],
+  'baba zula':['baba zula'],
   'hey douglas':['hey douglas'],
   'the ringo jets':['the ringo jets','ringo jets'],
   'ah kosmos':['ah kosmos'],
   'buyuk ev ablukada':['buyuk ev ablukada','büyük ev ablukada'],
   'son feci bisiklet':['son feci bisiklet'],
   'korhan futaci ve kara orkestra':['korhan futaci ve kara orkestra','korhan futacı ve kara orkestra'],
-  'rain to rust':['rain to rust']
+  'rain to rust':['rain to rust'],
+  'yok oyle kararli seyler':['yok oyle kararli seyler','yok öyle kararlı şeyler'],
+  'cemiyette pisiyorum':['cemiyette pisiyorum','cemiyette pişiyorum'],
+  'fairuz derin bulut':['fairuz derin bulut']
 };
 
 function yerliNorm(s=''){
@@ -109,7 +117,10 @@ function yerliArtistOK(expected, track){
   const en=yerliNorm(expected);
   const aliases=YERLI_ALIASES[en] || [en];
   const actual=(track?.artists||[]).map(a=>yerliNorm(a.name));
-  return actual.some(a=>aliases.some(x=>a===yerliNorm(x) || a.includes(yerliNorm(x)) || yerliNorm(x).includes(a)));
+  return actual.some(a=>aliases.some(x=>{
+    const xn=yerliNorm(x);
+    return a===xn || a.includes(xn) || xn.includes(a);
+  }));
 }
 
 function yerliTitleScore(expected, actual){
@@ -121,32 +132,54 @@ function yerliTitleScore(expected, actual){
   return Math.round(70*toks.filter(x=>a.includes(x)).length/toks.length);
 }
 
+function yerliVersionOK(name=''){
+  const n=yerliNorm(name);
+  return !['remix','live','canli','akustik','acoustic','sped up','slowed','karaoke'].some(x=>n.includes(yerliNorm(x)));
+}
+
+function chooseUndergroundFallback(items=[]){
+  const pool=items.filter(t=>t?.uri && yerliVersionOK(t.name));
+  if(!pool.length) return null;
+  const scored=pool.map(t=>{
+    const p=Number.isFinite(t.popularity)?t.popularity:35;
+    const target=35;
+    const score=100-Math.abs(p-target);
+    return {t,score};
+  }).sort((a,b)=>b.score-a.score);
+  return scored[0]?.t || null;
+}
+
 async function yerliFindTrack(artist,title){
   const queries=[`track:${title} artist:${artist}`,`${artist} ${title}`];
   let best=null,bestScore=-1;
   for(const q of queries){
     const j=await api('/search?type=track&limit=10&q='+encodeURIComponent(q));
     for(const t of (j.tracks?.items||[])){
-      if(!t?.uri || !yerliArtistOK(artist,t)) continue;
+      if(!t?.uri || !yerliArtistOK(artist,t) || !yerliVersionOK(t.name)) continue;
       const score=yerliTitleScore(title,t.name);
       if(score>bestScore){best=t;bestScore=score;}
     }
     if(bestScore>=85) break;
-    await sleep(160);
+    await sleep(150);
   }
-  return bestScore>=60 ? best : null;
+  if(bestScore>=60) return {track:best,fallback:false};
+
+  /* Exact parça yoksa aynı sanatçının kataloğundan orta-popülerlikte, temiz bir alternatif seç.
+     Böylece liste yine kontrollü kalır ama hatalı başlık yüzünden artist tamamen düşmez. */
+  if(yerliNorm(artist)==='camur') return {track:null,fallback:false};
+  const j=await api('/search?type=track&limit=10&q='+encodeURIComponent(`artist:${artist}`));
+  const sameArtist=(j.tracks?.items||[]).filter(t=>yerliArtistOK(artist,t));
+  const fallback=chooseUndergroundFallback(sameArtist);
+  return {track:fallback,fallback:!!fallback};
 }
 
 function selectYerliPlaylist(){
   const sel=$('playlist');
-  const wanted=[...sel.options].find(o=>{
-    const n=yerliNorm(o.textContent);
-    return n.includes('yeralti hatti') || n.includes('yeraltı hattı');
-  });
+  const wanted=[...sel.options].find(o=>yerliNorm(o.textContent).includes('yeralti hatti'));
   if(wanted){sel.value=wanted.value;return wanted.value;}
   if(sel.value){
     const txt=yerliNorm(sel.options[sel.selectedIndex]?.textContent||'');
-    if(txt.includes('yeralti') || txt.includes('yeraltı')) return sel.value;
+    if(txt.includes('yeralti')) return sel.value;
   }
   return '';
 }
@@ -159,24 +192,27 @@ async function buildYerli(){
   const uris=[];
   const usedPrimaryArtists=new Set();
   const missing=[];
+  const fallbacks=[];
   try{
     for(let i=0;i<YERLI_CANDIDATES.length && uris.length<YERLI_TARGET;i++){
       const [artist,title]=YERLI_CANDIDATES[i];
       status(`Yeraltı Hattı hazırlanıyor: ${uris.length}/${YERLI_TARGET}\n${artist} — ${title}`);
-      const t=await yerliFindTrack(artist,title);
-      if(!t){missing.push(`${artist} — ${title}`);await sleep(180);continue;}
+      const found=await yerliFindTrack(artist,title);
+      const t=found.track;
+      if(!t){missing.push(`${artist} — ${title}`);await sleep(160);continue;}
       const primaryId=t.artists?.[0]?.id || yerliNorm(t.artists?.[0]?.name||artist);
       if(usedPrimaryArtists.has(primaryId)) continue;
       uris.push(t.uri);
       usedPrimaryArtists.add(primaryId);
-      await sleep(180);
+      if(found.fallback) fallbacks.push(`${artist} → ${t.name}`);
+      await sleep(160);
     }
     if(uris.length<YERLI_MINIMUM){
       throw new Error(`Listeye dokunmadım. Yalnız ${uris.length} güvenli ve farklı sanatçı eşleşmesi bulundu; minimum ${YERLI_MINIMUM}.`);
     }
     status(`${uris.length} şarkı bulundu. Her biri farklı ana sanatçı. Yeraltı Hattı yeniden yazılıyor...`);
     await replaceWith(id,uris);
-    status(`Bitti. ${uris.length} şarkı, ${uris.length} farklı sanatçı. ÇAMUR seçimi “İçerimdesin”. Aynı ana sanatçı tekrar etmiyor.${missing.length?` ${missing.length} aday güvenli eşleşmediği için atlandı.`:''}`,'ok');
+    status(`Bitti. ${uris.length} şarkı, ${uris.length} farklı sanatçı. ÇAMUR seçimi “İçerimdesin”. Aynı ana sanatçı tekrar etmiyor.${fallbacks.length?` ${fallbacks.length} sanatçıda exact parça yerine kontrollü katalog alternatifi seçildi.`:''}${missing.length?` ${missing.length} aday bulunamadı.`:''}`,'ok');
     await playlists();
     $('playlist').value=id;
   } finally {
