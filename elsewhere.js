@@ -1,116 +1,112 @@
-/* Curated all-international 60s/70s psychedelic + global/ethnic playlist builder.
-   Rule: exactly one track per artist, target 60 tracks, never write if fewer than 50 are found. */
+/* Between ÇAMUR & Elsewhere
+   All-international 60s/70s psychedelic + global groove builder.
+   Rules: target 60 tracks, minimum 50, one primary artist only, no Turkish or North Korean acts. */
 
 const ELSEWHERE_TARGET = 60;
 const ELSEWHERE_MINIMUM = 50;
 
 const ELSEWHERE_CANDIDATES = [
-  ['WITCH','Lazy Bones!!'],
-  ['Amanaz','Khala My Friend'],
-  ['Ngozi Family','Hold On'],
-  ['Ofege',"It's Not Easy"],
-  ['Blo','Chant to Mother Earth'],
-  ['The Funkees','Akula Owu Onyeara'],
-  ['Psychedelic Aliens',"We're Laughing"],
-  ['Rob','Make It Fast, Make It Slow'],
-  ['Fela Kuti','Water No Get Enemy'],
-  ['William Onyeabor','Atomic Bomb'],
-  ['Sir Victor Uwaifo','Guitar Boy'],
-  ['Orchestre Poly-Rythmo de Cotonou','Gbeti Madjro'],
-  ['Mulatu Astatke','Yègellé Tezeta'],
-  ['Mahmoud Ahmed','Ere Mela Mela'],
-  ['Alemayehu Eshete','Telantena Zare'],
-  ['Osibisa','Music for Gong Gong'],
-  ['Assagai','Telephone Girl'],
-  ['Demon Fuzz','Hymn to Mother Earth'],
-  ['Kourosh Yaghmaei','Gole Yakh'],
-  ['Mehrpouya','Ghabileh-ye Leili'],
-  ['Omar Khorshid','Rakset El Fadaa'],
-  ['Elias Rahbani','Dance of Maria'],
-  ['Ziad Rahbani','Abu Ali'],
-  ['Issam Hajali','Ana Damir El Motakallim'],
-  ['Ferkat Al Ard','Oghneya'],
-  ['Ahmed Fakroun','Nisyan'],
-  ['Nass El Ghiwane','Mahmouma'],
-  ['Les Variations','Moroccan Roll'],
-  ['Ananda Shankar','Dancing Drums'],
-  ['Atomic Forest',"Obsession '77"],
-  ["Flower Travellin' Band",'Satori Part I'],
-  ['Speed, Glue & Shinki','Mr. Walking Drugstore Man'],
-  ['Far East Family Band','Nipponjin'],
-  ['The Mops',"I'm Just a Mops"],
-  ['Kim Jung Mi','Haenim'],
-  ['Shark Move','My Life'],
-  ['Benny Soebardja','Wise World'],
-  ['The Rollies','Bad News'],
-  ['Os Mutantes','A Minha Menina'],
-  ['Gal Costa','Tuareg'],
-  ['Novos Baianos','A Menina Dança'],
-  ['Secos & Molhados','Sangue Latino'],
-  ['Los Jaivas','Mira Niñita'],
-  ['Aguaturbia','Erotica'],
-  ['Los Blops','Los Momentos'],
-  ['Pescado Rabioso','Bajan'],
-  ['Invisible','Durazno Sangrando'],
-  ['Almendra','Color Humano'],
-  ['Arco Iris','Mañana Campestre'],
-  ["Los Dug Dug's",'Lost in My World'],
-  ['La Revolución de Emiliano Zapata','Nasty Sex'],
-  ['Traffic Sound','Meshkalina'],
-  ['Laghonia','Bahia'],
-  ['We All Together','Hey Revolution'],
-  ['Los Shakers','Always You'],
-  ['Juaneco y Su Combo','Ya Se Ha Muerto Mi Abuelo'],
-  ['Los Destellos','Elsa'],
-  ['Can','Vitamin C'],
-  ['Amon Düül II','Archangel Thunderbird'],
-  ['NEU!','Hallogallo'],
-  ['Faust','Jennifer'],
-  ['Popol Vuh','Aguirre I'],
-  ['Agitation Free','You Play for Us Today'],
-  ['Embryo','Radio Marrakesch'],
-  ['Guru Guru','Der LSD-Marsch'],
-  ['Area','Luglio, Agosto, Settembre (Nero)'],
-  ["Aphrodite's Child",'The Four Horsemen'],
-  ['Omega','Gyöngyhajú lány'],
-  ['Group 1850','Mother No-Head'],
-  ['Q65','The Life I Live'],
-  ['The Savage Rose','Long Before I Was Born'],
-  ["The Masters Apprentices",'War or Hands of Time'],
-  ['Spectrum',"I'll Be Gone"],
-  ['Human Instinct','Black Sally'],
-  ['Black Merda','Cynthy-Ruth'],
-  ['Rotary Connection','I Am the Black Gold of the Sun'],
-  ['Funkadelic','Maggot Brain'],
-  ['Shuggie Otis','Inspiration Information'],
-  ['Cymande','Dove'],
-  ['Exuma','Exuma, the Obeah Man'],
-  ['Dr. John','Gris-Gris Gumbo Ya Ya'],
-  ['Quintessence',"Shiva's Chant"],
-  ['Third Ear Band','Druid One'],
-  ['The Incredible String Band','A Very Cellular Song'],
-  ['Kaleidoscope','Egyptian Gardens'],
-  ["The Devil's Anvil",'Wala Dai'],
-  ['Santana','Soul Sacrifice'],
-  ['Silver Apples','Oscillations'],
-  ['The United States of America','The American Metaphysical Circus'],
+  ['Jefferson Airplane','White Rabbit'],
+  ['The Doors','Riders on the Storm'],
+  ['The Jimi Hendrix Experience','Voodoo Child (Slight Return)'],
+  ['Pink Floyd','Time'],
+  ['The Beatles','Tomorrow Never Knows'],
+  ['The Rolling Stones','Paint It, Black'],
+  ['Cream','Sunshine of Your Love'],
+  ['The Zombies','Time of the Season'],
+  ['The Byrds','Eight Miles High'],
+  ['The Beach Boys','Good Vibrations'],
+  ['Procol Harum','A Whiter Shade of Pale'],
+  ['Santana','Black Magic Woman'],
+  ['The Moody Blues','Nights in White Satin'],
+  ['Donovan','Hurdy Gurdy Man'],
+  ['Iron Butterfly','In-A-Gadda-Da-Vida'],
   ['Love','Alone Again Or'],
   ['The 13th Floor Elevators',"You're Gonna Miss Me"],
-  ['Jefferson Airplane','White Rabbit'],
-  ['The Jimi Hendrix Experience','Voodoo Child (Slight Return)']
+  ['The Electric Prunes','I Had Too Much to Dream (Last Night)'],
+  ['Shocking Blue','Venus'],
+  ['Steppenwolf','Magic Carpet Ride'],
+  ['Traffic','Dear Mr. Fantasy'],
+  ['Small Faces','Itchycoo Park'],
+  ['The Who','I Can See for Miles'],
+  ['The Kinks','See My Friends'],
+  ['The Velvet Underground','Venus in Furs'],
+  ['Grateful Dead','Dark Star'],
+  ['Big Brother & The Holding Company','Piece of My Heart'],
+  ['Spirit','I Got a Line on You'],
+  ['The Chambers Brothers','Time Has Come Today'],
+  ['Tommy James & The Shondells','Crimson and Clover'],
+  ['Norman Greenbaum','Spirit in the Sky'],
+  ['Hawkwind','Silver Machine'],
+  ['King Crimson','21st Century Schizoid Man'],
+  ['Yes','Roundabout'],
+  ['Black Sabbath','Planet Caravan'],
+  ['Led Zeppelin','Kashmir'],
+  ['David Bowie','Space Oddity'],
+  ['Funkadelic','Maggot Brain'],
+  ['The Temptations',"Papa Was a Rollin' Stone"],
+  ['Curtis Mayfield','Move On Up'],
+  ['Isaac Hayes','Walk On By'],
+  ['Sly & The Family Stone','Family Affair'],
+  ['War','The World Is a Ghetto'],
+  ['Fela Kuti','Water No Get Enemy'],
+  ['Mulatu Astatke','Yègellé Tezeta'],
+  ['Os Mutantes','A Minha Menina'],
+  ["Aphrodite's Child",'The Four Horsemen'],
+  ['Can','Vitamin C'],
+  ['NEU!','Hallogallo'],
+  ['Amon Düül II','Archangel Thunderbird'],
+  ['Popol Vuh','Aguirre I'],
+  ['Faust','Jennifer'],
+  ['Ananda Shankar','Dancing Drums'],
+  ['Kourosh Yaghmaei','Gole Yakh'],
+  ['Omar Khorshid','Rakset El Fadaa'],
+  ['Cymande','Dove'],
+  ['Manu Dibango','Soul Makossa'],
+  ['Osibisa','Sunshine Day'],
+  ['Hugh Masekela','Grazing in the Grass'],
+  ['Bob Marley & The Wailers','Exodus'],
+
+  /* Backups, only used if an earlier Spotify match is unavailable */
+  ['Rare Earth','I Just Want to Celebrate'],
+  ['Blue Cheer','Summertime Blues'],
+  ['Status Quo','Pictures of Matchstick Men'],
+  ['The Crazy World of Arthur Brown','Fire'],
+  ['The Animals','House of the Rising Sun'],
+  ["The Mamas & The Papas",'California Dreamin\''],
+  ['Buffalo Springfield',"For What It's Worth"],
+  ['The Guess Who','American Woman'],
+  ['Blind Faith',"Can't Find My Way Home"],
+  ['Free','All Right Now'],
+  ['Deep Purple','Child in Time'],
+  ['The Yardbirds','Shapes of Things'],
+  ['Rotary Connection','I Am the Black Gold of the Sun'],
+  ['Dr. John','Gris-Gris Gumbo Ya Ya'],
+  ['Exuma','Exuma, the Obeah Man'],
+  ['The Incredible String Band','A Very Cellular Song'],
+  ['The United States of America','The American Metaphysical Circus'],
+  ['Silver Apples','Oscillations'],
+  ['Gong','Master Builder'],
+  ['Soft Machine','Moon in June'],
+  ['Embryo','Radio Marrakesch'],
+  ['Area','Luglio, Agosto, Settembre (Nero)'],
+  ['Omega','Gyöngyhajú lány'],
+  ['Los Jaivas','Mira Niñita'],
+  ['Traffic Sound','Meshkalina'],
+  ['Los Destellos','Elsa'],
+  ['Juaneco y Su Combo','Ya Se Ha Muerto Mi Abuelo'],
+  ['Jorge Ben Jor','Taj Mahal'],
+  ['Gilberto Gil','Expresso 2222'],
+  ['Caetano Veloso','Alegria, Alegria'],
+  ['Gal Costa','Tuareg'],
+  ['Novos Baianos','A Menina Dança']
 ];
 
 const ELSEWHERE_ALIASES = {
-  'sir victor uwaifo':['victor uwaifo','sir victor uwaifo'],
-  'orchestre poly rythmo de cotonou':['orchestre poly rythmo','poly rythmo'],
-  'flower travellin band':['flower travellin band'],
-  'speed glue shinki':['speed glue shinki'],
-  'the jimi hendrix experience':['jimi hendrix','jimi hendrix experience'],
-  'the incredible string band':['incredible string band'],
-  'the masters apprentices':['masters apprentices'],
-  'los dug dug s':['los dug dug'],
-  'juaneco y su combo':['juaneco y su combo'],
-  'secos molhados':['secos molhados'],
+  'the jimi hendrix experience':['the jimi hendrix experience','jimi hendrix'],
+  'big brother the holding company':['big brother the holding company','big brother & the holding company'],
+  'the mamas the papas':['the mamas the papas','the mamas & the papas'],
+  'bob marley the wailers':['bob marley the wailers','bob marley & the wailers'],
   'neu':['neu']
 };
 
@@ -130,16 +126,16 @@ function elsewhereArtistOK(expected, track){
 function elsewhereTitleScore(expected, actual){
   const e=elsewhereNorm(expected), a=elsewhereNorm(actual);
   if(a===e) return 100;
-  if(a.includes(e) || e.includes(a)) return 80;
+  if(a.includes(e) || e.includes(a)) return 85;
   const toks=e.split(/\s+/).filter(x=>x.length>2);
   if(!toks.length) return 0;
-  return Math.round(60*toks.filter(x=>a.includes(x)).length/toks.length);
+  return Math.round(70*toks.filter(x=>a.includes(x)).length/toks.length);
 }
 
 async function elsewhereFindTrack(artist,title){
   const queries=[
     `track:${title} artist:${artist}`,
-    `${title} ${artist}`
+    `${artist} ${title}`
   ];
   let best=null,bestScore=-1;
   for(const q of queries){
@@ -149,52 +145,53 @@ async function elsewhereFindTrack(artist,title){
       const score=elsewhereTitleScore(title,t.name);
       if(score>bestScore){best=t;bestScore=score;}
     }
-    if(bestScore>=80) break;
-    await sleep(180);
+    if(bestScore>=85) break;
+    await sleep(160);
   }
-  return bestScore>=35 ? best : null;
+  return bestScore>=60 ? best : null;
 }
 
 function selectElsewherePlaylist(){
   const sel=$('playlist');
+  const exact=[...sel.options].find(o=>elsewhereNorm(o.textContent).startsWith('between camur elsewhere'));
+  if(exact){ sel.value=exact.value; return exact.value; }
   if(sel.value){
     const txt=sel.options[sel.selectedIndex]?.textContent||'';
     if(elsewhereNorm(txt).includes('elsewhere')) return sel.value;
   }
-  const opt=[...sel.options].find(o=>elsewhereNorm(o.textContent).includes('elsewhere'));
-  if(opt){ sel.value=opt.value; return opt.value; }
   return '';
 }
 
 async function buildElsewhere(){
   const id=selectElsewherePlaylist();
-  if(!id) throw new Error('Önce adında “Elsewhere” geçen playlisti seç.');
+  if(!id) throw new Error('“Between ÇAMUR & Elsewhere” listesini seç.');
   const btn=$('elsewhere');
   btn.disabled=true;
   const uris=[];
-  const usedArtists=new Set();
+  const usedPrimaryArtists=new Set();
   const missing=[];
   try{
     for(let i=0;i<ELSEWHERE_CANDIDATES.length && uris.length<ELSEWHERE_TARGET;i++){
       const [artist,title]=ELSEWHERE_CANDIDATES[i];
-      const artistKey=elsewhereNorm(artist);
-      if(usedArtists.has(artistKey)) continue;
-      status(`Global psychedelic liste hazırlanıyor: ${uris.length}/${ELSEWHERE_TARGET}\n${artist} — ${title}`);
+      status(`Elsewhere hazırlanıyor: ${uris.length}/${ELSEWHERE_TARGET}\n${artist} — ${title}`);
       const t=await elsewhereFindTrack(artist,title);
-      if(t){
-        uris.push(t.uri);
-        usedArtists.add(artistKey);
-      }else{
-        missing.push(`${artist} — ${title}`);
-      }
-      await sleep(220);
+      if(!t){ missing.push(`${artist} — ${title}`); await sleep(180); continue; }
+
+      const primaryId=t.artists?.[0]?.id || elsewhereNorm(t.artists?.[0]?.name||artist);
+      if(usedPrimaryArtists.has(primaryId)) continue;
+
+      uris.push(t.uri);
+      usedPrimaryArtists.add(primaryId);
+      await sleep(180);
     }
+
     if(uris.length<ELSEWHERE_MINIMUM){
-      throw new Error(`Güvenlik nedeniyle listeye dokunmadım. Yalnız ${uris.length} sağlam eşleşme bulundu; minimum ${ELSEWHERE_MINIMUM}.`);
+      throw new Error(`Listeye dokunmadım. Yalnız ${uris.length} güvenli ve farklı sanatçı eşleşmesi bulundu; minimum ${ELSEWHERE_MINIMUM}.`);
     }
-    status(`${uris.length} farklı sanatçı bulundu. Seçili liste tek sanatçı/tek şarkı kuralıyla yeniden yazılıyor...`);
+
+    status(`${uris.length} şarkı bulundu. Her biri farklı ana sanatçı. Liste Vercel Manager üzerinden yeniden yazılıyor...`);
     await replaceWith(id,uris);
-    status(`Bitti. ${uris.length} şarkı, ${uris.length} farklı sanatçı. Yerli sanatçı yok; aynı sanatçı iki kez yok.${missing.length?` ${missing.length} aday güvenli eşleşmediği için atlandı.`:''}`,'ok');
+    status(`Bitti. ${uris.length} şarkı, ${uris.length} farklı sanatçı. Tamamı yabancı; Türkiye ve Kuzey Kore yok; aynı ana sanatçı tekrar etmiyor.${missing.length?` ${missing.length} aday güvenli eşleşmediği için atlandı.`:''}`,'ok');
     await playlists();
     $('playlist').value=id;
   } finally {
