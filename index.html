@@ -11,59 +11,12 @@
 <body><main class="wrap">
 <h1>Murat Spotify Manager</h1>
 <p class="muted">Spotify listelerini tek yerden oluştur, doldur ve sırala.</p>
-
-<section class="card">
-  <div class="row">
-    <button id="connect" class="primary">Spotify'a bağlan</button>
-    <button id="disconnect">Bağlantıyı kaldır</button>
-    <span id="who" class="muted">Bağlı değil</span>
-  </div>
-</section>
-
-<section class="card">
-  <h2>1. Listeyi seç</h2>
-  <div class="row">
-    <select id="playlist"><option value="">Önce Spotify'a bağlan</option></select>
-    <button id="reload">Listeleri yenile</button>
-  </div>
-  <div class="row" style="margin-top:10px">
-    <input id="newName" placeholder="Yeni liste adı" />
-    <button id="create">Yeni liste oluştur</button>
-  </div>
-</section>
-
-<section class="card hero">
-  <h2>2. Between ÇAMUR & Elsewhere</h2>
-  <p class="muted">Tamamı yabancı. 60'lar ve 70'ler ağırlıklı, dünya çapında bilinen psychedelic klasikler ile güçlü global/etnik damar. Her sanatçıdan yalnızca bir şarkı.</p>
-  <button id="elsewhere" class="primary">Elsewhere'i 60 farklı sanatçıyla kur</button>
-  <p class="small muted">Hedef 60 şarkı = 60 farklı ana sanatçı. 50'den az güvenli eşleşme bulunursa listeye dokunulmaz.</p>
-</section>
-
-<section class="card">
-  <h2>3. Klasik Türk Müziği Antolojisi</h2>
-  <p class="muted">15. yüzyıldan 1950'lere doğru tarihsel sırayla ilerler. Spotify kayıt tarihine göre değil, eser ve besteci dönemine göre sıralanır.</p>
-  <button id="anthology" class="primary">Antolojiyi seçili listeye kur</button>
-  <p class="small muted">Parçaları Spotify kendi kataloğunda bulur. 100'lük yazma sınırı gerektiğinde otomatik bölünür.</p>
-</section>
-
-<details class="card">
-  <summary><strong>Elle parça ekleme araçları</strong></summary>
-  <p class="muted small">Bunları kullanmak zorunda değilsin.</p>
-  <textarea id="items" placeholder="spotify:track:...\nhttps://open.spotify.com/track/..."></textarea>
-  <div class="row" style="margin-top:10px">
-    <span id="count" class="pill">0 parça</span>
-    <button id="replace">Seçili listeyi bununla değiştir</button>
-    <button id="append">Listenin sonuna ekle</button>
-    <button id="clear" class="danger">Listeyi boşalt</button>
-  </div>
-</details>
-
-<section class="card">
-  <h2>Durum</h2>
-  <div id="status" class="status muted">Hazır.</div>
-</section>
+<section class="card"><div class="row"><button id="connect" class="primary">Spotify'a bağlan</button><button id="disconnect">Bağlantıyı kaldır</button><span id="who" class="muted">Bağlı değil</span></div></section>
+<section class="card"><h2>1. Listeyi seç</h2><div class="row"><select id="playlist"><option value="">Önce Spotify'a bağlan</option></select><button id="reload">Listeleri yenile</button></div><div class="row" style="margin-top:10px"><input id="newName" placeholder="Yeni liste adı" /><button id="create">Yeni liste oluştur</button></div></section>
+<section class="card hero"><h2>2. Between ÇAMUR & Elsewhere</h2><p class="muted">Tamamı yabancı. 60'lar ve 70'ler ağırlıklı, dünya çapında bilinen psychedelic klasikler ile güçlü global/etnik damar. Her sanatçıdan yalnızca bir şarkı.</p><button id="elsewhere" class="primary">Elsewhere'i 60 farklı sanatçıyla kur</button><p class="small muted">Hedef 60 şarkı = 60 farklı ana sanatçı. 50'den az güvenli eşleşme bulunursa listeye dokunulmaz.</p></section>
+<section class="card"><h2>3. Klasik Türk Müziği Antolojisi</h2><p class="muted">15. yüzyıldan 1950'lere doğru tarihsel sırayla ilerler. Spotify kayıt tarihine göre değil, eser ve besteci dönemine göre sıralanır.</p><button id="anthology" class="primary">Antolojiyi seçili listeye kur</button><p class="small muted">Parçaları Spotify kendi kataloğunda bulur. 100'lük yazma sınırı gerektiğinde otomatik bölünür.</p></section>
+<details class="card"><summary><strong>Elle parça ekleme araçları</strong></summary><p class="muted small">Bunları kullanmak zorunda değilsin.</p><textarea id="items" placeholder="spotify:track:...\nhttps://open.spotify.com/track/..."></textarea><div class="row" style="margin-top:10px"><span id="count" class="pill">0 parça</span><button id="replace">Seçili listeyi bununla değiştir</button><button id="append">Listenin sonuna ekle</button><button id="clear" class="danger">Listeyi boşalt</button></div></details>
+<section class="card"><h2>Durum</h2><div id="status" class="status muted">Hazır.</div></section>
 </main>
-<script src="app.js?v=9"></script>
-<script src="fix.js?v=9"></script>
-<script src="elsewhere.js?v=2"></script>
+<script src="app.js?v=9"></script><script src="fix.js?v=9"></script><script src="elsewhere.js?v=3"></script>
 </body></html>
