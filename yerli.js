@@ -2,8 +2,8 @@
    KİLİTLİ KURAL SETİ:
    - Yalnızca Türkiye sahnesinden sanatçılar
    - Pop / pop-rock yok
-   - Kargo, Emre Aydın, Redd, Vega vb. yok
-   - Duman ve Adamlar serbest
+   - Anadolu rock / klasik yerli rock omurgası yok
+   - Duman ve Adamlar önceki açık isteğe göre istisna olarak serbest
    - Her ana sanatçıdan yalnızca 1 parça
    - ÇAMUR sabit seçim: İçerimdesin
    - Hedef 60, minimum 50
@@ -13,10 +13,16 @@ const YERLI_TARGET = 60;
 const YERLI_MINIMUM = 50;
 
 const YERLI_BLOCKED_ARTISTS = new Set([
+  /* pop / pop-rock / ana akım alternatif */
   'kargo','emre aydin','redd','vega','pilli bebek','malt','son feci bisiklet','neyse',
   'sapan','gren','direc t','soft analog','gripin','kolpa','model','seksendort','pinhani',
   'manga','mor ve otesi','athena','mabel matiz','melike sahin','ceylan ertem','goksel',
-  'teoman','feridun duzagac','haluk levent','seksendort','pera','yuksek sadakat'
+  'teoman','feridun duzagac','haluk levent','pera','yuksek sadakat',
+
+  /* Anadolu rock / klasik yerli rock hattı */
+  'erkin koray','cem karaca','baris manco','mogollar','selda bagcan','edip akbayram',
+  'hardal','bunalim','kramp','whisky','mavi sakal','bulutsuzluk ozlemi','kesmeseker',
+  'kurtalan ekspres','3 hurel','uc hurel','fikret kizilok','apaslar','mavi isiklar'
 ]);
 
 const YERLI_CANDIDATES = [
@@ -41,8 +47,6 @@ const YERLI_CANDIDATES = [
   ['Adamlar','Rüyalarda Buruşmuşuz'],
   ['Kurban','Yalan'],
   ['Çilekeş','Y.O.K.'],
-  ['Kesmeşeker','Tut Beni Düşmeden'],
-  ['Mavi Sakal','İki Yol'],
   ['Hayko Cepkin','Sandık'],
   ['Pentagram','Bir'],
   ['Rashit','Dinozor'],
@@ -52,11 +56,6 @@ const YERLI_CANDIDATES = [
   ['Elektro Hafız','Destur'],
   ['Kim Ki O','Dans'],
   ['Büyük Ev Ablukada','Hayaletler'],
-  ['Bulutsuzluk Özlemi','Sözlerimi Geri Alamam'],
-  ['Hardal','Nasıl? Ne Zaman?'],
-  ['Bunalım','Taş Var Köpek Yok'],
-  ['Kramp','Lan N’oldu'],
-  ['Whisky','Yak Bizi'],
   ['Dr. Skull','Rules'],
   ['Murder King','Susma'],
   ['Black Tooth','Drink and Pass Out'],
@@ -79,14 +78,12 @@ const YERLI_CANDIDATES = [
   ['Kozmonotosman','Marmara'],
   ['Second','Rüya'],
   ['Lara Di Lara','Hazineler İçindesin'],
-  ['Sakin','Laleler Beyaz'],
   ['Kafabindünya','Obi'],
   ['Yok Öyle Kararlı Şeyler','Nefes Almak Zor'],
   ['Eskiz','Rüyalar'],
   ['Dengesiz Herifler','İstanbul'],
   ['Radical Noise','Plan-B'],
   ['Pickpocket','Falling'],
-  ['Objektif','Künye'],
   ['Cemiyette Pişiyorum','Et Rengi'],
   ['Dinar Bandosu','Saykodelikdeşik'],
   ['Fairuz Derin Bulut','Arabesk'],
@@ -95,7 +92,20 @@ const YERLI_CANDIDATES = [
   ['Kilink','Zehir'],
   ['Padme','Bugün'],
   ['Kana Kana','Kayıp'],
-  ['The Flabbies','Red']
+  ['The Flabbies','Red'],
+  ['The Away Days','Your Colour'],
+  ['Post Dial','Night'],
+  ['Mind Shifter','Ghosts'],
+  ['Pitohui','Gölge'],
+  ['Badmixday','Unut'],
+  ['Brek','Gece'],
+  ['Tampon','Punk'],
+  ['Kaos','Kaos'],
+  ['The Clown','No Future'],
+  ['Sattas','Bundan Sonra'],
+  ['Palmiyeler','Derine'],
+  ['Jakuzi','Toz'],
+  ['She Past Away','Kasvetli Kutlama']
 ];
 
 const YERLI_ALLOWED_ARTISTS = new Set(YERLI_CANDIDATES.map(([artist])=>yerliNorm(artist)));
@@ -155,8 +165,8 @@ function chooseUndergroundFallback(items=[]){
   const pool=items.filter(t=>t?.uri && yerliVersionOK(t.name));
   if(!pool.length) return null;
   return pool.map(t=>{
-    const p=Number.isFinite(t.popularity)?t.popularity:30;
-    const target=28;
+    const p=Number.isFinite(t.popularity)?t.popularity:28;
+    const target=24;
     return {t,score:100-Math.abs(p-target)};
   }).sort((a,b)=>b.score-a.score)[0]?.t || null;
 }
@@ -222,9 +232,9 @@ async function buildYerli(){
     if(uris.length<YERLI_MINIMUM){
       throw new Error(`Listeye dokunmadım. Yalnız ${uris.length} güvenli ve farklı sanatçı eşleşmesi bulundu; minimum ${YERLI_MINIMUM}.`);
     }
-    status(`${uris.length} şarkı bulundu. Yalnızca Türkiye sahnesi, pop/pop-rock filtresi açık. Liste yeniden yazılıyor...`);
+    status(`${uris.length} şarkı bulundu. Pop/pop-rock ve Anadolu rock filtreleri açık. Liste yeniden yazılıyor...`);
     await replaceWith(id,uris);
-    status(`Bitti. ${uris.length} şarkı, ${uris.length} farklı sanatçı. ÇAMUR seçimi “İçerimdesin”. Pop/pop-rock blok listesi aktif.${fallbacks.length?` ${fallbacks.length} sanatçıda aynı sanatçı içinden kontrollü alternatif seçildi.`:''}${missing.length?` ${missing.length} aday bulunamadı.`:''}`,'ok');
+    status(`Bitti. ${uris.length} şarkı, ${uris.length} farklı sanatçı. ÇAMUR seçimi “İçerimdesin”. Pop/pop-rock + Anadolu rock blok listesi aktif.${fallbacks.length?` ${fallbacks.length} sanatçıda aynı sanatçı içinden kontrollü alternatif seçildi.`:''}${missing.length?` ${missing.length} aday bulunamadı.`:''}`,'ok');
     await playlists();
     $('playlist').value=id;
   } finally {
