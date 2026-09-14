@@ -1,10 +1,23 @@
 /* Between ÇAMUR & Elsewhere: Yeraltı Hattı
-   Yerli alternatif/underground seçki.
-   Kurallar: hedef 60, minimum 50, her ana sanatçıdan 1 parça, pop ağırlığı yok.
-   ÇAMUR sabit seçim: İçerimdesin. Duman ve Adamlar listede olabilir. */
+   KİLİTLİ KURAL SETİ:
+   - Yalnızca Türkiye sahnesinden sanatçılar
+   - Pop / pop-rock yok
+   - Kargo, Emre Aydın, Redd, Vega vb. yok
+   - Duman ve Adamlar serbest
+   - Her ana sanatçıdan yalnızca 1 parça
+   - ÇAMUR sabit seçim: İçerimdesin
+   - Hedef 60, minimum 50
+*/
 
 const YERLI_TARGET = 60;
 const YERLI_MINIMUM = 50;
+
+const YERLI_BLOCKED_ARTISTS = new Set([
+  'kargo','emre aydin','redd','vega','pilli bebek','malt','son feci bisiklet','neyse',
+  'sapan','gren','direc t','soft analog','gripin','kolpa','model','seksendort','pinhani',
+  'manga','mor ve otesi','athena','mabel matiz','melike sahin','ceylan ertem','goksel',
+  'teoman','feridun duzagac','haluk levent','seksendort','pera','yuksek sadakat'
+]);
 
 const YERLI_CANDIDATES = [
   ['ÇAMUR','İçerimdesin'],
@@ -29,11 +42,7 @@ const YERLI_CANDIDATES = [
   ['Kurban','Yalan'],
   ['Çilekeş','Y.O.K.'],
   ['Kesmeşeker','Tut Beni Düşmeden'],
-  ['Pilli Bebek','Fotoğraf'],
   ['Mavi Sakal','İki Yol'],
-  ['Malt','Deprem'],
-  ['Redd','Nefes Bile Almadan'],
-  ['Vega','Serzenişte'],
   ['Hayko Cepkin','Sandık'],
   ['Pentagram','Bir'],
   ['Rashit','Dinozor'],
@@ -43,8 +52,6 @@ const YERLI_CANDIDATES = [
   ['Elektro Hafız','Destur'],
   ['Kim Ki O','Dans'],
   ['Büyük Ev Ablukada','Hayaletler'],
-  ['Son Feci Bisiklet','Bikinisinde Astronomi'],
-  ['Kargo','Yıldızların Altında'],
   ['Bulutsuzluk Özlemi','Sözlerimi Geri Alamam'],
   ['Hardal','Nasıl? Ne Zaman?'],
   ['Bunalım','Taş Var Köpek Yok'],
@@ -58,10 +65,6 @@ const YERLI_CANDIDATES = [
   ['Rain To Rust','Stillborn Flowers'],
   ['Affet Robot','Rüya'],
   ['Apartmanlar','Son'],
-  ['Neyse','Hokkabaz'],
-  ['Sapan','Bir An İçin'],
-  ['Gren','Senin Yüzünden'],
-  ['Direc-t','Ama Sen Varsın'],
   ['Mekanik','Bazen'],
   ['Konstrukt','Dolunay'],
   ['Korhan Futacı ve Kara Orkestra','Kara'],
@@ -75,7 +78,6 @@ const YERLI_CANDIDATES = [
   ['Zen','Derya'],
   ['Kozmonotosman','Marmara'],
   ['Second','Rüya'],
-  ['Soft Analog','Buzlar Çözülmeden'],
   ['Lara Di Lara','Hazineler İçindesin'],
   ['Sakin','Laleler Beyaz'],
   ['Kafabindünya','Obi'],
@@ -89,8 +91,14 @@ const YERLI_CANDIDATES = [
   ['Dinar Bandosu','Saykodelikdeşik'],
   ['Fairuz Derin Bulut','Arabesk'],
   ['Haossaa','Çözülme'],
-  ['BaBa ZuLa','Bir Sana Bir De Bana']
+  ['2/5 BZ','No Pasaran'],
+  ['Kilink','Zehir'],
+  ['Padme','Bugün'],
+  ['Kana Kana','Kayıp'],
+  ['The Flabbies','Red']
 ];
+
+const YERLI_ALLOWED_ARTISTS = new Set(YERLI_CANDIDATES.map(([artist])=>yerliNorm(artist)));
 
 const YERLI_ALIASES = {
   'camur':['camur','çamur'],
@@ -99,12 +107,12 @@ const YERLI_ALIASES = {
   'the ringo jets':['the ringo jets','ringo jets'],
   'ah kosmos':['ah kosmos'],
   'buyuk ev ablukada':['buyuk ev ablukada','büyük ev ablukada'],
-  'son feci bisiklet':['son feci bisiklet'],
   'korhan futaci ve kara orkestra':['korhan futaci ve kara orkestra','korhan futacı ve kara orkestra'],
   'rain to rust':['rain to rust'],
   'yok oyle kararli seyler':['yok oyle kararli seyler','yok öyle kararlı şeyler'],
   'cemiyette pisiyorum':['cemiyette pisiyorum','cemiyette pişiyorum'],
-  'fairuz derin bulut':['fairuz derin bulut']
+  'fairuz derin bulut':['fairuz derin bulut'],
+  '2 5 bz':['2 5 bz','2/5 bz']
 };
 
 function yerliNorm(s=''){
@@ -113,10 +121,16 @@ function yerliNorm(s=''){
     .replace(/[^a-z0-9]+/g,' ').trim();
 }
 
+function yerliBlocked(name=''){
+  return YERLI_BLOCKED_ARTISTS.has(yerliNorm(name));
+}
+
 function yerliArtistOK(expected, track){
-  const en=yerliNorm(expected);
-  const aliases=YERLI_ALIASES[en] || [en];
+  const expectedNorm=yerliNorm(expected);
+  if(!YERLI_ALLOWED_ARTISTS.has(expectedNorm) || yerliBlocked(expected)) return false;
+  const aliases=YERLI_ALIASES[expectedNorm] || [expectedNorm];
   const actual=(track?.artists||[]).map(a=>yerliNorm(a.name));
+  if(actual.some(a=>YERLI_BLOCKED_ARTISTS.has(a))) return false;
   return actual.some(a=>aliases.some(x=>{
     const xn=yerliNorm(x);
     return a===xn || a.includes(xn) || xn.includes(a);
@@ -140,16 +154,15 @@ function yerliVersionOK(name=''){
 function chooseUndergroundFallback(items=[]){
   const pool=items.filter(t=>t?.uri && yerliVersionOK(t.name));
   if(!pool.length) return null;
-  const scored=pool.map(t=>{
-    const p=Number.isFinite(t.popularity)?t.popularity:35;
-    const target=35;
-    const score=100-Math.abs(p-target);
-    return {t,score};
-  }).sort((a,b)=>b.score-a.score);
-  return scored[0]?.t || null;
+  return pool.map(t=>{
+    const p=Number.isFinite(t.popularity)?t.popularity:30;
+    const target=28;
+    return {t,score:100-Math.abs(p-target)};
+  }).sort((a,b)=>b.score-a.score)[0]?.t || null;
 }
 
 async function yerliFindTrack(artist,title){
+  if(yerliBlocked(artist)) return {track:null,fallback:false};
   const queries=[`track:${title} artist:${artist}`,`${artist} ${title}`];
   let best=null,bestScore=-1;
   for(const q of queries){
@@ -163,10 +176,8 @@ async function yerliFindTrack(artist,title){
     await sleep(150);
   }
   if(bestScore>=60) return {track:best,fallback:false};
-
-  /* Exact parça yoksa aynı sanatçının kataloğundan orta-popülerlikte, temiz bir alternatif seç.
-     Böylece liste yine kontrollü kalır ama hatalı başlık yüzünden artist tamamen düşmez. */
   if(yerliNorm(artist)==='camur') return {track:null,fallback:false};
+
   const j=await api('/search?type=track&limit=10&q='+encodeURIComponent(`artist:${artist}`));
   const sameArtist=(j.tracks?.items||[]).filter(t=>yerliArtistOK(artist,t));
   const fallback=chooseUndergroundFallback(sameArtist);
@@ -196,23 +207,24 @@ async function buildYerli(){
   try{
     for(let i=0;i<YERLI_CANDIDATES.length && uris.length<YERLI_TARGET;i++){
       const [artist,title]=YERLI_CANDIDATES[i];
+      if(yerliBlocked(artist)) continue;
       status(`Yeraltı Hattı hazırlanıyor: ${uris.length}/${YERLI_TARGET}\n${artist} — ${title}`);
       const found=await yerliFindTrack(artist,title);
       const t=found.track;
-      if(!t){missing.push(`${artist} — ${title}`);await sleep(160);continue;}
+      if(!t){missing.push(`${artist} — ${title}`);await sleep(150);continue;}
       const primaryId=t.artists?.[0]?.id || yerliNorm(t.artists?.[0]?.name||artist);
       if(usedPrimaryArtists.has(primaryId)) continue;
       uris.push(t.uri);
       usedPrimaryArtists.add(primaryId);
       if(found.fallback) fallbacks.push(`${artist} → ${t.name}`);
-      await sleep(160);
+      await sleep(150);
     }
     if(uris.length<YERLI_MINIMUM){
       throw new Error(`Listeye dokunmadım. Yalnız ${uris.length} güvenli ve farklı sanatçı eşleşmesi bulundu; minimum ${YERLI_MINIMUM}.`);
     }
-    status(`${uris.length} şarkı bulundu. Her biri farklı ana sanatçı. Yeraltı Hattı yeniden yazılıyor...`);
+    status(`${uris.length} şarkı bulundu. Yalnızca Türkiye sahnesi, pop/pop-rock filtresi açık. Liste yeniden yazılıyor...`);
     await replaceWith(id,uris);
-    status(`Bitti. ${uris.length} şarkı, ${uris.length} farklı sanatçı. ÇAMUR seçimi “İçerimdesin”. Aynı ana sanatçı tekrar etmiyor.${fallbacks.length?` ${fallbacks.length} sanatçıda exact parça yerine kontrollü katalog alternatifi seçildi.`:''}${missing.length?` ${missing.length} aday bulunamadı.`:''}`,'ok');
+    status(`Bitti. ${uris.length} şarkı, ${uris.length} farklı sanatçı. ÇAMUR seçimi “İçerimdesin”. Pop/pop-rock blok listesi aktif.${fallbacks.length?` ${fallbacks.length} sanatçıda aynı sanatçı içinden kontrollü alternatif seçildi.`:''}${missing.length?` ${missing.length} aday bulunamadı.`:''}`,'ok');
     await playlists();
     $('playlist').value=id;
   } finally {
