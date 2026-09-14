@@ -7,10 +7,12 @@
    - Her ana sanatçıdan yalnızca 1 parça
    - ÇAMUR sabit seçim: İçerimdesin
    - Hedef 60, minimum 50
+   - Spotify 429'a karşı yavaş ve kontrollü sorgulama
 */
 
 const YERLI_TARGET = 60;
 const YERLI_MINIMUM = 50;
+const YERLI_GAP_MS = 1800;
 
 const YERLI_BLOCKED_ARTISTS = new Set([
   /* pop / pop-rock / ana akım alternatif */
@@ -102,13 +104,8 @@ const YERLI_CANDIDATES = [
   ['Tampon','Punk'],
   ['Kaos','Kaos'],
   ['The Clown','No Future'],
-  ['Sattas','Bundan Sonra'],
-  ['Palmiyeler','Derine'],
-  ['Jakuzi','Toz'],
-  ['She Past Away','Kasvetli Kutlama']
+  ['Sattas','Bundan Sonra']
 ];
-
-const YERLI_ALLOWED_ARTISTS = new Set(YERLI_CANDIDATES.map(([artist])=>yerliNorm(artist)));
 
 const YERLI_ALIASES = {
   'camur':['camur','çamur'],
@@ -130,6 +127,8 @@ function yerliNorm(s=''){
     .replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i')
     .replace(/[^a-z0-9]+/g,' ').trim();
 }
+
+const YERLI_ALLOWED_ARTISTS = new Set(YERLI_CANDIDATES.map(([artist])=>yerliNorm(artist)));
 
 function yerliBlocked(name=''){
   return YERLI_BLOCKED_ARTISTS.has(yerliNorm(name));
@@ -171,25 +170,38 @@ function chooseUndergroundFallback(items=[]){
   }).sort((a,b)=>b.score-a.score)[0]?.t || null;
 }
 
+async function yerliApi(path,longRetry=0){
+  try{
+    return await api(path);
+  }catch(e){
+    const msg=String(e?.message||e);
+    if(msg.includes('Spotify API 429') && longRetry<2){
+      const waitMs=longRetry===0?30000:60000;
+      status(`Spotify kota sınırına geldi. ${Math.round(waitMs/1000)} sn güvenli bekleme yapılıyor; listeye henüz dokunulmadı...`,'warn');
+      await sleep(waitMs);
+      return yerliApi(path,longRetry+1);
+    }
+    throw e;
+  }
+}
+
 async function yerliFindTrack(artist,title){
   if(yerliBlocked(artist)) return {track:null,fallback:false};
-  const queries=[`track:${title} artist:${artist}`,`${artist} ${title}`];
+
+  const q=`track:${title} artist:${artist}`;
+  const j=await yerliApi('/search?type=track&limit=10&q='+encodeURIComponent(q));
   let best=null,bestScore=-1;
-  for(const q of queries){
-    const j=await api('/search?type=track&limit=10&q='+encodeURIComponent(q));
-    for(const t of (j.tracks?.items||[])){
-      if(!t?.uri || !yerliArtistOK(artist,t) || !yerliVersionOK(t.name)) continue;
-      const score=yerliTitleScore(title,t.name);
-      if(score>bestScore){best=t;bestScore=score;}
-    }
-    if(bestScore>=85) break;
-    await sleep(150);
+  for(const t of (j.tracks?.items||[])){
+    if(!t?.uri || !yerliArtistOK(artist,t) || !yerliVersionOK(t.name)) continue;
+    const score=yerliTitleScore(title,t.name);
+    if(score>bestScore){best=t;bestScore=score;}
   }
   if(bestScore>=60) return {track:best,fallback:false};
   if(yerliNorm(artist)==='camur') return {track:null,fallback:false};
 
-  const j=await api('/search?type=track&limit=10&q='+encodeURIComponent(`artist:${artist}`));
-  const sameArtist=(j.tracks?.items||[]).filter(t=>yerliArtistOK(artist,t));
+  await sleep(YERLI_GAP_MS);
+  const a=await yerliApi('/search?type=track&limit=10&q='+encodeURIComponent(`artist:${artist}`));
+  const sameArtist=(a.tracks?.items||[]).filter(t=>yerliArtistOK(artist,t));
   const fallback=chooseUndergroundFallback(sameArtist);
   return {track:fallback,fallback:!!fallback};
 }
@@ -212,27 +224,37 @@ async function buildYerli(){
   btn.disabled=true;
   const uris=[];
   const usedPrimaryArtists=new Set();
+  const usedExpectedArtists=new Set();
   const missing=[];
   const fallbacks=[];
   try{
+    status('Spotify kota koruması açık. Liste yavaş ama güvenli biçimde hazırlanıyor...','warn');
+    await sleep(2500);
+
     for(let i=0;i<YERLI_CANDIDATES.length && uris.length<YERLI_TARGET;i++){
       const [artist,title]=YERLI_CANDIDATES[i];
-      if(yerliBlocked(artist)) continue;
-      status(`Yeraltı Hattı hazırlanıyor: ${uris.length}/${YERLI_TARGET}\n${artist} — ${title}`);
+      const expectedKey=yerliNorm(artist);
+      if(yerliBlocked(artist) || usedExpectedArtists.has(expectedKey)) continue;
+      usedExpectedArtists.add(expectedKey);
+
+      status(`Yeraltı Hattı hazırlanıyor: ${uris.length}/${YERLI_TARGET}\n${artist} — ${title}\nKota koruması aktif.`);
       const found=await yerliFindTrack(artist,title);
       const t=found.track;
-      if(!t){missing.push(`${artist} — ${title}`);await sleep(150);continue;}
+      if(!t){missing.push(`${artist} — ${title}`);await sleep(YERLI_GAP_MS);continue;}
+
       const primaryId=t.artists?.[0]?.id || yerliNorm(t.artists?.[0]?.name||artist);
-      if(usedPrimaryArtists.has(primaryId)) continue;
+      if(usedPrimaryArtists.has(primaryId)){await sleep(YERLI_GAP_MS);continue;}
       uris.push(t.uri);
       usedPrimaryArtists.add(primaryId);
       if(found.fallback) fallbacks.push(`${artist} → ${t.name}`);
-      await sleep(150);
+      await sleep(YERLI_GAP_MS);
     }
+
     if(uris.length<YERLI_MINIMUM){
       throw new Error(`Listeye dokunmadım. Yalnız ${uris.length} güvenli ve farklı sanatçı eşleşmesi bulundu; minimum ${YERLI_MINIMUM}.`);
     }
-    status(`${uris.length} şarkı bulundu. Pop/pop-rock ve Anadolu rock filtreleri açık. Liste yeniden yazılıyor...`);
+
+    status(`${uris.length} şarkı bulundu. Pop/pop-rock ve Anadolu rock filtreleri açık. Liste şimdi tek seferde yeniden yazılıyor...`);
     await replaceWith(id,uris);
     status(`Bitti. ${uris.length} şarkı, ${uris.length} farklı sanatçı. ÇAMUR seçimi “İçerimdesin”. Pop/pop-rock + Anadolu rock blok listesi aktif.${fallbacks.length?` ${fallbacks.length} sanatçıda aynı sanatçı içinden kontrollü alternatif seçildi.`:''}${missing.length?` ${missing.length} aday bulunamadı.`:''}`,'ok');
     await playlists();
