@@ -1,4 +1,4 @@
-/* One-shot finish: auto-select the anthology and rebuild it with stricter matching. */
+/* Robust one-shot finish for mobile/desktop. */
 
 if (typeof COMPOSER_ALIASES !== 'undefined') {
   COMPOSER_ALIASES['Ebubekir Ağa']=['ebubekir','bekir aga','eyyubi bekir'];
@@ -20,27 +20,33 @@ findTrack = async function(item,seen){
   return bestScore>=0?best.uri:null;
 };
 
+let autoFinishStarted=false;
 async function autoFinishAnthology(){
+  if(autoFinishStarted) return;
   if(!store.get()) return;
-  if(localStorage.getItem('anthology_autofinish_v4')==='done') return;
-
   const sel=$('playlist');
-  for(let i=0;i<30 && sel.options.length<=1;i++) await sleep(300);
+  if(!sel || sel.options.length<=1) return;
 
   const target=[...sel.options].find(o=>_norm(o.textContent).startsWith('klasik turk muzigi antolojisi'));
-  if(!target){
-    status('Klasik Türk Müziği Antolojisi bulunamadı. Listeyi bir kez seçip sayfayı yenile.','warn');
-    return;
-  }
+  if(!target) return;
 
+  autoFinishStarted=true;
   sel.value=target.value;
-  status('Antoloji son kez otomatik düzeltiliyor. Bu sayfayı açık bırak.');
+  status('Antoloji otomatik düzeltiliyor. Bu sayfayı açık bırak.');
   try{
     await buildAnthology();
-    localStorage.setItem('anthology_autofinish_v4','done');
+    status('Bitti. Antoloji düzeltilmiş eşleştirmelerle yeniden kuruldu.','ok');
   }catch(e){
+    autoFinishStarted=false;
     status('Otomatik düzeltme tamamlanamadı: '+e.message,'warn');
   }
 }
 
-window.addEventListener('load',()=>setTimeout(autoFinishAnthology,1200));
+window.addEventListener('load',()=>{
+  setTimeout(autoFinishAnthology,1200);
+  const timer=setInterval(()=>{
+    if(autoFinishStarted){clearInterval(timer);return;}
+    autoFinishAnthology();
+  },2000);
+  setTimeout(()=>clearInterval(timer),30000);
+});
