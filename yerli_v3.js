@@ -102,7 +102,7 @@ const Y3_CANDIDATES=[
   ['Hayko Cepkin','Sandık'],
   ['Pentagram','Bir'],
   ['The Madcap','Stepped On A Lego'],
-  ['Al'York','Golden Table'],
+  ["Al'York",'Golden Table'],
   ['Sonic Boom','Yalnızlık'],
   ['Kozmonotosman','Marmara'],
   ['Objektif','Künye'],
