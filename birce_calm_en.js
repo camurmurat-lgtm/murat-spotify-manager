@@ -1,17 +1,18 @@
 /* Birce public kids playlist 1: calm English children songs
-   RULES
-   - Public playlist, follow-friendly naming
+   LOCKED RULES
+   - Public playlist with an original English name
    - English-language children's songs only
-   - Calm / bedtime / gentle-play mood
+   - Calm / quiet-play / wind-down / bedtime mood
    - One primary artist per track, no artist repeats
+   - Exactly 60 tracks required
    - Built only through Murat Spotify Manager / Vercel
 */
 
-const BCE_NAME='LITTLE QUIET HOURS | CALM ENGLISH SONGS FOR KIDS';
-const BCE_DESC='Gentle English children’s songs for quiet play, winding down and bedtime. One song per artist, carefully selected for little listeners.';
-const BCE_TARGET=30;
-const BCE_MINIMUM=22;
-const BCE_DELAY=900;
+const BCE_NAME='LITTLE EARS, SOFT SKIES | CALM ENGLISH SONGS FOR KIDS';
+const BCE_DESC='A gentle world of English children’s songs for quiet play, winding down and bedtime. 60 songs, 60 different artists, made for little ears.';
+const BCE_TARGET=60;
+const BCE_MINIMUM=60;
+const BCE_DELAY=1200;
 
 const BCE_CANDIDATES=[
  ['Raffi','Baby Beluga'],
@@ -27,18 +28,15 @@ const BCE_CANDIDATES=[
  ['The Kiboomers','Five Little Ducks'],
  ['The Wiggles','Rock-A-Bye Your Bear'],
  ['Sesame Street','Sing'],
- ['Cocomelon','Yes Yes Bedtime Song'],
+ ['CoComelon','Yes Yes Bedtime Song'],
  ['Maple Leaf Learning','Good Night'],
  ['Bounce Patrol','Twinkle Twinkle Little Star'],
  ['Patty Shukla','I Love You'],
- ['Kidz Bop Kids','You Are My Sunshine'],
  ['Nursery Rhymes 123','Hush Little Baby'],
  ['The Pop Ups','Box of Crayons'],
  ['Dog on Fleas','Sleepytime'],
  ['Justin Roberts','Mama Is Sad'],
  ['They Might Be Giants','Sleepwalkers'],
- ['Dan Zanes','Catch That Train!'],
- ['Peter, Paul and Mommy','Puff, the Magic Dragon'],
  ['The Learning Station','Peace Like a River'],
  ['Kidsongs','The Bear Went Over the Mountain'],
  ['Cedarmont Kids','This Old Man'],
@@ -48,12 +46,65 @@ const BCE_CANDIDATES=[
  ['The Juicebox Jukebox','Kindness'],
  ['Emily Arrow','The Dot Song'],
  ['Koo Koo Kanga Roo','Nap Time'],
- ['Rockabye Baby!','Here Comes the Sun'],
  ['The Singing Walrus','Goodbye Song'],
  ['The Mik Maks','Goodnight'],
  ['Howdytoons','Sleepy Dinosaur'],
- ['The Bumble Nums','Goodnight Song'],
- ['Pinkfong','Twinkle Twinkle Little Star']
+ ['Pinkfong','Twinkle Twinkle Little Star'],
+ ['Red Grammer','Teaching Peace'],
+ ['Tom Chapin','Family Tree'],
+ ['Jim Gill','May There Always Be Sunshine'],
+ ['Ella Jenkins',"You'll Sing a Song and I'll Sing a Song"],
+ ['Charlotte Diamond','Four Hugs a Day'],
+ ['Sharon, Lois & Bram','Skinnamarink'],
+ ['Renee & Jeremy','Night Mantra'],
+ ['Kira Willey','Colors'],
+ ['Bari Koral','Fly Like a Butterfly'],
+ ['Mister G','Dreamtime'],
+ ['Milkshake','Bottle of Sunshine'],
+ ['Tim Kubart','Sunday Crafternoon'],
+ ['Lunch Money','Are You a Rabbit?'],
+ ['Gustafer Yellowgold',"I'm From the Sun"],
+ ['Alina Celeste','Little Bird'],
+ ['Laura Doherty','Butterfly'],
+ ['Sukey Molloy','I Am Happy'],
+ ['Pancake Manor','Twinkle Twinkle Little Star'],
+ ['Dave and Ava','Twinkle Twinkle Little Star'],
+ ['Little Baby Bum Nursery Rhyme Friends','Twinkle Twinkle Little Star'],
+ ['ChuChu TV','Twinkle Twinkle Little Star'],
+ ['LooLoo Kids','Twinkle Twinkle Little Star'],
+ ['HooplaKidz','Hush Little Baby'],
+ ['HeyKids','Twinkle Twinkle Little Star'],
+ ['Kids TV 123','The Solar System Song'],
+ ['Peter, Paul and Mommy','Puff, the Magic Dragon'],
+ ['The Harmonica Pocket','Ladybug One'],
+ ['The Whizpops','Sea Blue Sea'],
+ ['Walter Martin',"We Like the Zoo ('Cause We're Animals Too)"],
+ ['Rabbit!','Peace'],
+ ['Vered','Good Morning My Love'],
+ ['Sara Lovell','Night Life'],
+ ['The Nields','Anna Kick a Hole in the Sky'],
+ ['SteveSongs','On a Flying Guitar'],
+ ['Farmer Jason','Forest Rhymes'],
+ ['Alphabet Rockers','Shine'],
+ ['The Relative Minors','One More Book'],
+ ['Lard Dog & The Band of Shy','Dreamers'],
+ ['The Good Ms. Padgett','Say Goodnight'],
+ ['The Terrible Twos','Amelia Minor'],
+ ['The Dream Jam Band','Moon Dreams'],
+ ['The Hipwaders','Hey Josie'],
+ ['The Jimmies','Bedhead'],
+ ['Little Angel','Bedtime Song'],
+ ['Bebefinn','Good Night'],
+ ['KiiYii','Twinkle Twinkle Little Star'],
+ ['The Wonder Kids','You Are My Sunshine'],
+ ['The Hit Crew Kids','You Are My Sunshine'],
+ ['Baby Joy Joy','Twinkle Twinkle Little Star'],
+ ['The GiggleBellies','Twinkle Twinkle Little Star'],
+ ['KidsCamp','Twinkle Twinkle Little Star'],
+ ['Junior Squad','Twinkle Twinkle Little Star'],
+ ['The Little Sunshine Kids','You Are My Sunshine'],
+ ['The Rainbow Collections','Twinkle Twinkle Little Star'],
+ ['Theś?','__unused__']
 ];
 
 function bceNorm(s=''){
@@ -99,18 +150,25 @@ async function buildBirceCalmEnglish(){
     let missing=0;
     for(let i=0;i<BCE_CANDIDATES.length && picked.length<BCE_TARGET;i++){
       const [artist,title]=BCE_CANDIDATES[i];
+      if(title==='__unused__') continue;
       const ak=bceNorm(artist);
       if(usedArtists.has(ak)) continue;
-      status(`Çocuk listesi taranıyor: ${i+1}/${BCE_CANDIDATES.length}\n${artist} — ${title}`);
+      status(`Çocuk listesi taranıyor: ${i+1}/${BCE_CANDIDATES.length}\n${artist} — ${title}\n${picked.length}/60 güvenli eşleşme`);
       const t=await bceFindTrack(artist,title);
-      if(t){picked.push(t.uri);usedArtists.add(bceNorm(t.artists?.[0]?.name||artist));} else missing++;
+      if(t){
+        const actualArtist=bceNorm(t.artists?.[0]?.name||artist);
+        if(!usedArtists.has(actualArtist)){
+          picked.push(t.uri);
+          usedArtists.add(actualArtist);
+        }
+      } else missing++;
       await sleep(BCE_DELAY);
     }
-    if(picked.length<BCE_MINIMUM) throw new Error(`Yeterli güvenli eşleşme bulunamadı (${picked.length}). Listeye dokunulmadı.`);
+    if(picked.length<BCE_MINIMUM) throw new Error(`60 farklı sanatçı tamamlanamadı (${picked.length}/60). Listeye dokunulmadı.`);
     const p=await bceFindOrCreatePlaylist();
-    await replaceWith(p.id,picked);
+    await replaceWith(p.id,picked.slice(0,60));
     await api(`/playlists/${p.id}`,{method:'PUT',body:JSON.stringify({name:BCE_NAME,public:true,description:BCE_DESC})});
-    status(`Bitti. ${picked.length} şarkı, ${picked.length} farklı sanatçı. Liste herkese açık: ${BCE_NAME}${missing?` • ${missing} aday eşleşmedi.`:''}`,'ok');
+    status(`Bitti. 60 şarkı, 60 farklı sanatçı. Liste herkese açık: ${BCE_NAME}${missing?` • ${missing} aday eşleşmedi.`:''}`,'ok');
     await playlists();
     $('playlist').value=p.id;
   } finally {
