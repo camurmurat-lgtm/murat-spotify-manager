@@ -6,6 +6,8 @@
    - One primary artist per track, no artist repeats
    - Exactly 60 tracks required
    - Built only through Murat Spotify Manager / Vercel
+   - FAST PATH: if the playlist already contains 60+ unique primary artists,
+     normalize it to 60 with only playlist read/write calls. No track search.
 */
 
 const BCE_NAME='LITTLE EARS, SOFT SKIES | CALM ENGLISH SONGS FOR KIDS';
@@ -128,7 +130,7 @@ async function bceFindTrack(artist,title){
   return null;
 }
 
-async function bceFindOrCreatePlaylist(){
+async function bceFindPlaylist(){
   let url='/me/playlists?limit=50';
   while(url){
     const j=await api(url.replace('https://api.spotify.com/v1',''));
@@ -136,14 +138,57 @@ async function bceFindOrCreatePlaylist(){
     if(found) return found;
     url=j.next;
   }
+  return null;
+}
+
+async function bceFindOrCreatePlaylist(){
+  const found=await bceFindPlaylist();
+  if(found) return found;
   return api('/me/playlists',{method:'POST',body:JSON.stringify({name:BCE_NAME,public:true,description:BCE_DESC})});
+}
+
+async function bceReadExistingUnique(id){
+  let url=`/playlists/${id}/items?limit=100`;
+  const picked=[];
+  const used=new Set();
+  while(url && picked.length<60){
+    const j=await api(url.replace('https://api.spotify.com/v1',''));
+    for(const row of (j?.items||[])){
+      const t=row?.item||row?.track||row;
+      if(!t?.uri) continue;
+      const a=t.artists?.[0];
+      const key=a?.id||bceNorm(a?.name||'');
+      if(!key||used.has(key)) continue;
+      used.add(key);
+      picked.push(t.uri);
+      if(picked.length===60) break;
+    }
+    url=j?.next||null;
+  }
+  return picked;
+}
+
+async function bceFastNormalizeExisting(){
+  const p=await bceFindPlaylist();
+  if(!p) return false;
+  status('Mevcut çocuk listesi hızlı modda kontrol ediliyor...');
+  const uris=await bceReadExistingUnique(p.id);
+  if(uris.length<60) return false;
+  await replaceWith(p.id,uris.slice(0,60));
+  await api(`/playlists/${p.id}`,{method:'PUT',body:JSON.stringify({name:BCE_NAME,public:true,description:BCE_DESC})});
+  status('Bitti. 60 şarkı, 60 farklı sanatçı. Hızlı mod kullanıldı; parça araması yapılmadı.','ok');
+  await playlists();
+  $('playlist').value=p.id;
+  return true;
 }
 
 async function buildBirceCalmEnglish(){
   const btn=$('birce-calm-en');
   if(btn) btn.disabled=true;
   try{
-    status('Sakin İngilizce çocuk listesi hazırlanıyor...');
+    if(await bceFastNormalizeExisting()) return;
+
+    status('Mevcut listede 60 farklı sanatçı hazır değil. Eksikler aranıyor...');
     const picked=[];
     const usedArtists=new Set();
     let missing=0;
