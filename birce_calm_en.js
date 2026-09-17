@@ -103,8 +103,7 @@ const BCE_CANDIDATES=[
  ['KidsCamp','Twinkle Twinkle Little Star'],
  ['Junior Squad','Twinkle Twinkle Little Star'],
  ['The Little Sunshine Kids','You Are My Sunshine'],
- ['The Rainbow Collections','Twinkle Twinkle Little Star'],
- ['Theś?','__unused__']
+ ['The Rainbow Collections','Twinkle Twinkle Little Star']
 ];
 
 function bceNorm(s=''){
@@ -150,7 +149,6 @@ async function buildBirceCalmEnglish(){
     let missing=0;
     for(let i=0;i<BCE_CANDIDATES.length && picked.length<BCE_TARGET;i++){
       const [artist,title]=BCE_CANDIDATES[i];
-      if(title==='__unused__') continue;
       const ak=bceNorm(artist);
       if(usedArtists.has(ak)) continue;
       status(`Çocuk listesi taranıyor: ${i+1}/${BCE_CANDIDATES.length}\n${artist} — ${title}\n${picked.length}/60 güvenli eşleşme`);
