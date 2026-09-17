@@ -16,6 +16,39 @@ const BCE_TARGET=60;
 const BCE_MINIMUM=60;
 const BCE_DELAY=1200;
 
+async function bceApi(path,opt={},attempt=0){
+  let tk=await token();
+  if(!tk) throw new Error('Önce Spotify’a bağlan.');
+  const run=()=>fetch('https://api.spotify.com/v1'+path,{
+    ...opt,
+    headers:{Authorization:'Bearer '+tk,'Content-Type':'application/json',...(opt.headers||{})}
+  });
+  let r=await run();
+  if(r.status===401){tk=await refresh();r=await run()}
+  if(r.status===429&&attempt<5){
+    const sec=Math.max(1,Number(r.headers.get('Retry-After'))||2);
+    status(`Spotify kısa bir mola istedi. ${sec} sn bekleniyor...`,'warn');
+    await sleep(sec*1000);
+    return bceApi(path,opt,attempt+1);
+  }
+  if(!r.ok){
+    const tx=await r.text();
+    throw new Error('Spotify API '+r.status+': '+tx);
+  }
+  if(r.status===204) return null;
+  const tx=await r.text();
+  if(!tx.trim()) return null;
+  try{return JSON.parse(tx)}catch{return tx}
+}
+
+async function bceReplaceWith(id,uris){
+  if(!uris.length) throw new Error('Eklenecek parça bulunamadı.');
+  await bceApi(`/playlists/${id}/items`,{method:'PUT',body:JSON.stringify({uris:uris.slice(0,100)})});
+  for(let i=100;i<uris.length;i+=100){
+    await bceApi(`/playlists/${id}/items`,{method:'POST',body:JSON.stringify({uris:uris.slice(i,i+100)})});
+  }
+}
+
 const BCE_CANDIDATES=[
  ['Raffi','Baby Beluga'],
  ['The Laurie Berkner Band','Moon Moon Moon'],
@@ -119,9 +152,9 @@ function bceVersionOK(t){
 
 async function bceFindTrack(artist,title){
   const q=`track:${title} artist:${artist}`;
-  const j=await api('/search?type=track&limit=5&q='+encodeURIComponent(q));
+  const j=await bceApi('/search?type=track&limit=5&q='+encodeURIComponent(q));
   const wantArtist=bceNorm(artist), wantTitle=bceNorm(title);
-  for(const t of (j.tracks?.items||[])){
+  for(const t of (j?.tracks?.items||[])){
     if(!t?.uri||!bceVersionOK(t)) continue;
     const primary=bceNorm(t.artists?.[0]?.name||'');
     const gotTitle=bceNorm(t.name||'');
@@ -133,10 +166,10 @@ async function bceFindTrack(artist,title){
 async function bceFindPlaylist(){
   let url='/me/playlists?limit=50';
   while(url){
-    const j=await api(url.replace('https://api.spotify.com/v1',''));
-    const found=(j.items||[]).find(p=>p.name===BCE_NAME);
+    const j=await bceApi(url.replace('https://api.spotify.com/v1',''));
+    const found=(j?.items||[]).find(p=>p.name===BCE_NAME);
     if(found) return found;
-    url=j.next;
+    url=j?.next||null;
   }
   return null;
 }
@@ -144,7 +177,7 @@ async function bceFindPlaylist(){
 async function bceFindOrCreatePlaylist(){
   const found=await bceFindPlaylist();
   if(found) return found;
-  return api('/me/playlists',{method:'POST',body:JSON.stringify({name:BCE_NAME,public:true,description:BCE_DESC})});
+  return bceApi('/me/playlists',{method:'POST',body:JSON.stringify({name:BCE_NAME,public:true,description:BCE_DESC})});
 }
 
 async function bceReadExistingUnique(id){
@@ -152,7 +185,7 @@ async function bceReadExistingUnique(id){
   const picked=[];
   const used=new Set();
   while(url && picked.length<60){
-    const j=await api(url.replace('https://api.spotify.com/v1',''));
+    const j=await bceApi(url.replace('https://api.spotify.com/v1',''));
     for(const row of (j?.items||[])){
       const t=row?.item||row?.track||row;
       if(!t?.uri) continue;
@@ -174,11 +207,9 @@ async function bceFastNormalizeExisting(){
   status('Mevcut çocuk listesi hızlı modda kontrol ediliyor...');
   const uris=await bceReadExistingUnique(p.id);
   if(uris.length<60) return false;
-  await replaceWith(p.id,uris.slice(0,60));
-  await api(`/playlists/${p.id}`,{method:'PUT',body:JSON.stringify({name:BCE_NAME,public:true,description:BCE_DESC})});
+  await bceReplaceWith(p.id,uris.slice(0,60));
+  await bceApi(`/playlists/${p.id}`,{method:'PUT',body:JSON.stringify({name:BCE_NAME,public:true,description:BCE_DESC})});
   status('Bitti. 60 şarkı, 60 farklı sanatçı. Hızlı mod kullanıldı; parça araması yapılmadı.','ok');
-  await playlists();
-  $('playlist').value=p.id;
   return true;
 }
 
@@ -187,7 +218,6 @@ async function buildBirceCalmEnglish(){
   if(btn) btn.disabled=true;
   try{
     if(await bceFastNormalizeExisting()) return;
-
     status('Mevcut listede 60 farklı sanatçı hazır değil. Eksikler aranıyor...');
     const picked=[];
     const usedArtists=new Set();
@@ -209,11 +239,9 @@ async function buildBirceCalmEnglish(){
     }
     if(picked.length<BCE_MINIMUM) throw new Error(`60 farklı sanatçı tamamlanamadı (${picked.length}/60). Listeye dokunulmadı.`);
     const p=await bceFindOrCreatePlaylist();
-    await replaceWith(p.id,picked.slice(0,60));
-    await api(`/playlists/${p.id}`,{method:'PUT',body:JSON.stringify({name:BCE_NAME,public:true,description:BCE_DESC})});
+    await bceReplaceWith(p.id,picked.slice(0,60));
+    await bceApi(`/playlists/${p.id}`,{method:'PUT',body:JSON.stringify({name:BCE_NAME,public:true,description:BCE_DESC})});
     status(`Bitti. 60 şarkı, 60 farklı sanatçı. Liste herkese açık: ${BCE_NAME}${missing?` • ${missing} aday eşleşmedi.`:''}`,'ok');
-    await playlists();
-    $('playlist').value=p.id;
   } finally {
     if(btn) btn.disabled=false;
   }
