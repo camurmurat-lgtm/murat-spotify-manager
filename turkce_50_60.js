@@ -119,7 +119,8 @@ async function tr5060EnsurePlaylist(){
   let opt=[...sel.options].find(o=>tr5060Norm((o.textContent||'').replace(/\s*\(\d+\)\s*$/,''))===wanted);
   if(opt){sel.value=opt.value;return opt.value;}
   status(`“${TR5060_PLAYLIST}” oluşturuluyor...`);
-  const j=await api('/me/playlists',{method:'POST',body:JSON.stringify({
+  const me=await api('/me');
+  const j=await api('/users/'+encodeURIComponent(me.id)+'/playlists',{method:'POST',body:JSON.stringify({
     name:TR5060_PLAYLIST,
     public:false,
     description:"1950-1969 Türkiye: kalıcı, kabul görmüş ve güçlü Türkçe kayıtlar. Murat Spotify Manager seçkisi."
