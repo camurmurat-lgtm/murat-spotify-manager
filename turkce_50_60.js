@@ -2,6 +2,9 @@
 (function(root){
   'use strict';
   const NAME='Türkçe 1950-1959';
+  // The six-record research subset was rejected as the final curation.
+  const CURATION_READY=false;
+  const CURATION_STATUS='Seçki tamamlanmadı. 6 kayıt araştırma çekirdeğidir; mevcut Spotify listesi bu çekirdekle değiştirilmez.';
   const DESCRIPTION='1950–1959 içinde yayımlanmış Türkçe tango ve Batı temelli popüler kayıtlar. Özgün plak ilanlarıyla belgelenen 6 kayıt; dijital arşiv aktarımları. Türk sanat müziği, Türk halk müziği ve dönem dışı istisna yok. Kaynaklar: murat-spotify-manager.vercel.app';
   const VERSION='tr50-2026-09-26', COOLDOWN='tr50-cooldown-v1';
   const norm=s=>String(s||'').toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9]+/g,' ').trim();
@@ -146,7 +149,7 @@
     report('Bitti. 6 kayıt ve sıraları Spotify’dan yeniden okunarak doğrulandı.\nTSM, THM ve dönem dışı istisna yok.');
     return {id,uris,state:'verified'};
   }
-  const exported={NAME,DESCRIPTION,VERSION,COOLDOWN,records,validateCatalog,matches,retryAt,transport,readItems,build};
+  const exported={NAME,DESCRIPTION,VERSION,COOLDOWN,CURATION_READY,CURATION_STATUS,records,validateCatalog,matches,retryAt,transport,readItems,build};
   if(typeof module!=='undefined')module.exports=exported;
   if(typeof document!=='undefined')root.addEventListener('load',()=>{
     const button=document.getElementById('tr5060');if(!button)return;
@@ -155,6 +158,13 @@
       const li=document.createElement('li'), a=document.createElement('a');
       li.textContent=r.artist+' — '+r.title+' · '+r.catalog+' · ';
       a.href=r.ad;a.textContent=r.adDate+' yeni plak ilanı';a.target='_blank';a.rel='noopener noreferrer';li.appendChild(a);list.appendChild(li);
+    }
+    if(!CURATION_READY){
+      button.disabled=true;
+      button.textContent='Seçki henüz tamamlanmadı';
+      const report=document.getElementById('tr5060-report');
+      if(report)report.textContent=CURATION_STATUS;
+      return;
     }
     let busy=false;
     button.onclick=safe(async()=>{

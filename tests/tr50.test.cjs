@@ -94,3 +94,19 @@ test('401 refresh is limited to one retry after explicit rejection',async()=>{
   let calls=0,refreshes=0;const request=c.transport({fetch:async()=>++calls===1?{status:401}:{status:204,ok:true},token:async()=> 'redacted',refresh:async()=>{refreshes++;return 'redacted';},storage:memory()});
   assert.equal(await request('/me'),null);assert.equal(calls,2);assert.equal(refreshes,1);
 });
+
+test('incomplete curation cannot install a browser write handler',()=>{
+  const fs=require('node:fs'),vm=require('node:vm');
+  const button={disabled:false,textContent:''},report={textContent:''};
+  let onLoad;
+  const window={addEventListener:(event,fn)=>{assert.equal(event,'load');onLoad=fn;}};
+  const document={getElementById:id=>id==='tr5060'?button:id==='tr5060-report'?report:null};
+  // No safe/token/fetch globals: the incomplete path must stop before installing any writer.
+  vm.runInNewContext(fs.readFileSync(require.resolve('../turkce_50_60.js'),'utf8'),{window,document});
+  onLoad();
+  assert.equal(c.CURATION_READY,false);
+  assert.equal(button.disabled,true);
+  assert.equal(button.onclick,undefined);
+  assert.match(report.textContent,/tamamlanmadı/);
+  assert.match(fs.readFileSync(require.resolve('../index.html'),'utf8'),/id="tr5060"[^>]*disabled/);
+});
