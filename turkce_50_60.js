@@ -1,138 +1,179 @@
-/* Türkçe 1950-1959 — sıkı kürasyon
-   Batı müziği temelli Türkçe popüler müzik.
-   Sanat müziği, fantezi, arabesk yok. Sayı doldurmak için parça eklenmez.
-   Cahit Oben — Halimem (1965), kullanıcı isteğiyle tek tarih dışı istisnadır.
-*/
-
-const TR50_PLAYLIST = "Türkçe 1950-1959";
-
-/* Spotify'da tek tek doğrulanmış kayıtlar.
-   Tarih omurgası: 1950'ler. */
-const TR50_CORE = [
-  { artist:"Celal İnce", title:"Kalbim Yalnız Seni Sevecek", uri:"spotify:track:4qwJYsiydtvCXbToB3vnEU" },
-  { artist:"Celal İnce", title:"Bekleyeceğim", uri:"spotify:track:7nzuux6RxCCjUhQQ3j05yO" },
-
-  { artist:"Zehra Eren", title:"Aşk Denizi", uri:"spotify:track:6dFOuPhpLh7RZZFZPfbXTy" },
-  { artist:"Zehra Eren", title:"Dinle Sevgili", uri:"spotify:track:3ntsf3bw7KPu3UkLOZ8c3E" },
-
-  { artist:"Şecaattin Tanyerli", title:"Yüzünde Göz İzleri Var", uri:"spotify:track:6Szk3gouCZq38dYqKg1saM" },
-  { artist:"Şecaattin Tanyerli", title:"Beyaz Zambak", uri:"spotify:track:5Pm9hgRL9DrL3CuiV4UtgC" },
-
-  { artist:"Dario Moreno", title:"Ali (Entarisi Ala Benziyor)", uri:"spotify:track:4jzZaq2gVdyxUn11hMyUSm" },
-  { artist:"Dario Moreno", title:"Kalenin Bedenleri", uri:"spotify:track:3Az0krJ194BFmAjjY3EFw7" }
-];
-
-function tr50Norm(s=''){
-  return String(s).toLocaleLowerCase('tr-TR').normalize('NFD')
-    .replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i')
-    .replace(/[^a-z0-9]+/g,' ').trim();
-}
-
-function tr50Report(t, cls=''){
-  const el = $('tr5060-report');
-  if(el){ el.className = 'status ' + cls; el.textContent = t; }
-  status(t, cls);
-}
-
-async function tr50FindHalimem(){
-  const queries = [
-    'track:Halimem artist:Cahit Oben',
-    'track:Halime artist:Cahit Oben',
-    '"Hoppalıvık Halimem" "Cahit Oben"',
-    'Cahit Oben Halimem'
-  ];
-  for(const q of queries){
-    const j = await api('/search?type=track&limit=10&q=' + encodeURIComponent(q));
-    for(const t of (j.tracks?.items || [])){
-      const artists = (t.artists || []).map(a => tr50Norm(a.name));
-      const name = tr50Norm(t.name);
-      const artistOK = artists.some(a => a === 'cahit oben' || a.includes('cahit oben'));
-      const titleOK = name.includes('halim');
-      if(t.uri && artistOK && titleOK) return t.uri;
+/* Original releases, not composition dates or digital album dates. See TURKCE_1950_1959.md. */
+(function(root){
+  'use strict';
+  const NAME='Türkçe 1950-1959';
+  const DESCRIPTION='1950–1959 içinde yayımlanmış Türkçe tango ve Batı temelli popüler kayıtlar. Özgün plak ilanlarıyla belgelenen 6 kayıt; dijital arşiv aktarımları. Türk sanat müziği, Türk halk müziği ve dönem dışı istisna yok. Kaynaklar: murat-spotify-manager.vercel.app';
+  const VERSION='tr50-2026-09-26', COOLDOWN='tr50-cooldown-v1';
+  const norm=s=>String(s||'').toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9]+/g,' ').trim();
+  const names=[NAME,"Türkçe 50'ler","Türkçe 50'ler & 60'lar"].map(norm);
+  const sources={
+    h1952:'https://www.gastearsivi.com/gazete/hurriyet/1952-10-08/6',
+    t1952:'https://www.gastearsivi.com/gazete/hurriyet/1952-12-24/7',
+    h1953:'https://www.gastearsivi.com/gazete/hurriyet/1953-08-17/5',
+    m1955:'https://www.gastearsivi.com/gazete/milliyet2/1955-04-18/6',
+    oriente:'https://oriente.de/en/catalogue/oriente-cds/221-old-world-tangos-vol-4-instanbul-tango-1927-1953-en',
+    roll:'https://birartibir.org/wp-content/uploads/ROLL_2005_095.pdf',
+    king:'https://music.apple.com/us/song/1803847722'
+  };
+  // Windows allow conflicting in-decade year estimates without inventing an exact year.
+  // Every admission still requires a contemporary NEW-release advertisement and a known transfer.
+  const records=[
+    {title:'Sana Nerden Gönül Verdim',artist:'Celal İnce',spotifyTitle:'Sana Nerden Gönül Verdim',id:'4e7Wg4gnZbHioDrfn3meDm',artistId:'6iYEpOX1rs6ZhJQ7vstI4M',albumId:'2K79layPoJfzdW5IIy0f5r',duration:167840,genre:'tango',release:[1952,1952],catalog:'Sahibinin Sesi AX 2561',adDate:'1952-10-08',ad:sources.h1952,transfer:sources.oriente},
+    {title:'Yıllar Var Ki',artist:'Şecaattin Tanyerli',spotifyTitle:'Yillar Var Ki',id:'2wXGtTveOO25VdH0pZIbH0',artistId:'5l51fj1CAnSYjCcOFKHbEg',albumId:'2K79layPoJfzdW5IIy0f5r',duration:163066,genre:'tango',release:[1951,1952],catalog:'Columbia RT 17939',adDate:'1952-12-24',ad:sources.t1952,transfer:sources.oriente},
+    {title:'Bir Eylül Akşamı',artist:'Şecaattin Tanyerli',spotifyTitle:'Bir Eylül Akşamı',id:'33keGC87LNc17r6Yf8Qbjp',artistId:'3p2mnN65fp5kzGocOd2CFR',albumId:'3zfumlvWrYrOcb1fHlFh1q',duration:212508,genre:'tango',release:[1952,1952],catalog:'Columbia RT 17939',adDate:'1952-12-24',ad:sources.t1952,transfer:sources.king},
+    {title:'Hasret (Ayşe’ye)',artist:'Celal İnce',spotifyTitle:'Hasret / Tango',id:'0dqTdjVZeXNyoY7ZoZRdd4',artistId:'6iYEpOX1rs6ZhJQ7vstI4M',albumId:'0IZbJFiScjfiLZEmIZbsQu',duration:182026,genre:'tango',release:[1952,1953],catalog:'Sahibinin Sesi AX 2572',adDate:'1953-08-17',ad:sources.h1953,transfer:sources.roll},
+    {title:'Bekleyeceğim',artist:'Celal İnce',spotifyTitle:'Bekleyeceğim / Slow',id:'7nzuux6RxCCjUhQQ3j05yO',artistId:'6iYEpOX1rs6ZhJQ7vstI4M',albumId:'0IZbJFiScjfiLZEmIZbsQu',duration:193106,genre:'slow',release:[1952,1953],catalog:'Sahibinin Sesi AX 2572',adDate:'1953-08-17',ad:sources.h1953,transfer:sources.roll},
+    {title:'Perestiş',artist:'Celal İnce',spotifyTitle:'Prestij Tango',id:'0Bvq5hkjNnYf0oGUuu2U7P',artistId:'6iYEpOX1rs6ZhJQ7vstI4M',albumId:'0IZbJFiScjfiLZEmIZbsQu',duration:184000,genre:'tango',release:[1953,1955],catalog:'Sahibinin Sesi AX 2601',adDate:'1955-04-18',ad:sources.m1955,transfer:sources.roll}
+  ].map(r=>Object.freeze({...r,language:'tr',tradition:'western-popular',evidence:'contemporary-new-release-ad',recording:'original-transfer',uri:'spotify:track:'+r.id,release:Object.freeze(r.release)}));
+  Object.freeze(records);
+  function validateCatalog(list){
+    if(!Array.isArray(list)||!list.length||list.length>100) throw new Error('Seçki boş veya geçersiz.');
+    const seen=new Set();
+    for(const r of list){
+      const [from,to]=r.release||[];
+      if(!Number.isInteger(from)||!Number.isInteger(to)||from<1950||to>1959||from>to||
+        r.language!=='tr'||r.tradition!=='western-popular'||!['tango','slow','swing','jazz','early-pop','slow-fox','bolero'].includes(r.genre)||
+        r.evidence!=='contemporary-new-release-ad'||r.recording!=='original-transfer'||!r.catalog||
+        !/^https:\/\//.test(r.ad||'')||!/^https:\/\//.test(r.transfer||'')||
+        !/^195\d-\d{2}-\d{2}$/.test(r.adDate||'')||
+        ![r.id,r.artistId,r.albumId].every(x=>/^[A-Za-z0-9]{22}$/.test(x||''))||r.uri!=='spotify:track:'+r.id||seen.has(r.uri))
+        throw new Error('Tarih/tür/kayıt kanıtı geçersiz: '+(r.title||'isimsiz kayıt'));
+      seen.add(r.uri);
     }
-    await sleep(120);
   }
-  return null;
-}
-
-async function tr50EnsurePlaylist(){
-  await playlists();
-  const sel = $('playlist');
-  const accepted = new Set([
-    tr50Norm("Türkçe 1950-1959"),
-    tr50Norm("Türkçe 50'ler"),
-    tr50Norm("Türkçe 50'ler & 60'lar")
-  ]);
-
-  const opt = [...sel.options].find(o => {
-    const clean = (o.textContent || '').replace(/\s*\(\d+\)\s*$/,'');
-    return accepted.has(tr50Norm(clean));
-  });
-
-  if(opt){
-    sel.value = opt.value;
-    /* Eski deneme adları varsa aynı playlist'i yeniden kullan ve adını düzelt. */
-    try{
-      await api('/playlists/' + opt.value, {
-        method:'PUT',
-        body:JSON.stringify({
-          name:TR50_PLAYLIST,
-          description:"1950-1959 Batı müziği temelli Türkçe popüler müzik seçkisi. Sanat müziği, fantezi ve arabesk yok. Cahit Oben — Halimem (1965) yalnızca kullanıcı isteğiyle tarih dışı istisnadır."
-        })
+  function matches(r,t){
+    // Reject relinking to an unreviewed album/master; never substitute a search result.
+    return !!t&&t.type==='track'&&t.id===r.id&&t.uri===r.uri&&!t.linked_from&&!t.is_local&&t.is_playable!==false&&
+      !Object.keys(t.restrictions||{}).length&&norm(t.name)===norm(r.spotifyTitle)&&
+      t.album?.id===r.albumId&&t.artists?.length===1&&t.artists[0].id===r.artistId&&
+      Number.isFinite(t.duration_ms)&&Math.abs(t.duration_ms-r.duration)<=2000;
+  }
+  function retryAt(value,now){
+    if(value!==null&&String(value).trim()!==''&&Number.isFinite(Number(value))) return now+Math.max(1,Number(value))*1000;
+    const date=Date.parse(value);return Number.isFinite(date)&&date>now?date:now+60000;
+  }
+  function transport({fetch:send,token,refresh,storage,now=Date.now}){
+    return async function request(path,opt={}){
+      const until=Number(storage.getItem(COOLDOWN))||0;
+      if(until>now()) throw new Error('Spotify kota molası: '+new Date(until).toLocaleString('tr-TR')+' sonrasında tekrar dene.');
+      if(!path.startsWith('/')||path.startsWith('//')) throw new Error('Geçersiz Spotify yolu.');
+      let tk=await token();if(!tk) throw new Error('Önce Spotify’a bağlan.');
+      const run=()=>send('https://api.spotify.com/v1'+path,{...opt,headers:{Authorization:'Bearer '+tk,'Content-Type':'application/json'}});
+      const write=!!opt.method&&opt.method!=='GET';
+      let response;
+      try{
+        response=await run();
+        if(response.status===401){tk=await refresh();if(!tk)throw new Error('Oturum yenilenemedi.');response=await run();}
+      }catch(e){throw new Error(write?'Yazma yanıtı alınamadı. Sonuç belirsiz; otomatik tekrar yazılmadı. Aynı düğme yalnızca sonucu kontrol edecek.':'Spotify okunamadı: '+e.message);}
+      if(response.status===429){
+        const resume=retryAt(response.headers.get('Retry-After'),now());storage.setItem(COOLDOWN,String(resume));
+        throw new Error('Spotify kotası doldu. '+new Date(resume).toLocaleString('tr-TR')+' sonrasında tekrar dene; otomatik tekrar yapılmadı.');
+      }
+      if(!response.ok) throw new Error('Spotify '+response.status+(write?' — yazma doğrulanamadı; otomatik tekrar yapılmadı.':''));
+      if(response.status===204) return null;
+      try{return await response.json();}catch{throw new Error(write?'Yazma yanıtı çözülemedi; sonuç kontrolü gerekli.':'Spotify yanıtı okunamadı.');}
+    };
+  }
+  async function findTarget(request,me,selected){
+    if(selected){if(!/^[A-Za-z0-9]{22}$/.test(selected))throw new Error('Geçersiz playlist.');return selected;}
+    const found=[];let offset=0;
+    for(;;){
+      const page=await request('/me/playlists?limit=50&offset='+offset);
+      if(!Array.isArray(page.items)) throw new Error('Playlistler okunamadı.');
+      found.push(...page.items.filter(p=>p&&p.owner?.id===me.id&&names.includes(norm(p.name))));
+      if(!page.next)break;
+      if(!page.items.length||offset>=10000)throw new Error('Playlist taraması tamamlanamadı.');offset+=page.items.length;
+    }
+    if(found.length!==1)throw new Error(found.length?'Birden fazla 1950’ler listesi var. Üstten güncellenecek listeyi seç.':'Mevcut Türkçe 1950-1959 listesini üstten seç.');
+    return found[0].id;
+  }
+  async function readItems(request,id){
+    const items=[];let offset=0;
+    for(;;){
+      const page=await request('/playlists/'+id+'/items?limit=50&offset='+offset);
+      if(!Array.isArray(page.items))throw new Error('Playlist içeriği okunamadı.');
+      for(const row of page.items){
+        const t=row.item||row.track;
+        if(!t||t.is_local||!/^spotify:(track|episode):[A-Za-z0-9]{22}$/.test(t.uri||''))throw new Error('Mevcut liste eksiksiz yedeklenemiyor; işlem durduruldu.');
+        items.push({uri:t.uri,originalUri:t.linked_from?.uri||t.uri,name:t.name||'',type:t.type});
+      }
+      if(!page.next)break;
+      if(!page.items.length||offset>=10000)throw new Error('Playlist içeriği eksik.');offset+=page.items.length;
+    }
+    return items;
+  }
+  const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+  async function build({id,request,storage,report=()=>{},now=Date.now}){
+    validateCatalog(records);
+    const me=await request('/me');if(!me?.id)throw new Error('Spotify hesabı doğrulanamadı.');
+    id=await findTarget(request,me,id);
+    async function target(){
+      const p=await request('/playlists/'+id);
+      if(!p||p.owner?.id!==me.id||!names.includes(norm(p.name))||!p.snapshot_id) throw new Error('Seçili liste sana ait Türkçe 1950-1959 listesi olmalı. Listeye dokunulmadı.');
+      return p;
+    }
+    const before=await target(), uris=records.map(r=>r.uri);
+    report('6 sabit kaydın Spotify sürümleri kontrol ediliyor…');
+    for(const r of records){
+      const t=await request('/tracks/'+r.id);
+      if(!matches(r,t))throw new Error('Listeye dokunulmadı: '+r.artist+' — '+r.title+' için seçilen arşiv sürümü kullanılamıyor veya değişmiş.');
+    }
+    const old=await readItems(request,id), current=await target();
+    if(before.snapshot_id!==current.snapshot_id)throw new Error('Hazırlık sırasında liste değişti. İşlem durduruldu.');
+    const resultKey=VERSION+':result:'+me.id+':'+id;
+    let previous;
+    try{previous=JSON.parse(storage.getItem(resultKey)||'null');}catch{throw new Error('Önceki işlem kaydı okunamadı; güvenli devam edilemiyor.');}
+    if(!same(old.map(t=>t.originalUri),uris)){
+      if(previous&&['write-pending','verification-pending'].includes(previous.state))throw new Error('Önceki yazmanın sonucu belirsiz ve içerik seçkiyle eşleşmiyor. Otomatik yeniden yazma durduruldu; Spotify listesini kontrol et.');
+      // Unique backup survives later runs; storage failure aborts BEFORE any mutation.
+      const backupKey=VERSION+':backup:'+me.id+':'+id+':'+current.snapshot_id;
+      if(!storage.getItem(backupKey))storage.setItem(backupKey,JSON.stringify({at:now(),playlist:id,name:current.name,description:current.description,snapshot:current.snapshot_id,items:old}));
+      storage.setItem(resultKey,JSON.stringify({state:'write-pending',uris,backupKey,at:now()}));
+      report('Eski liste yedeklendi. 6 kayıt tek işlemle yazılıyor…');
+      await request('/playlists/'+id+'/items',{method:'PUT',body:JSON.stringify({uris})});
+      storage.setItem(resultKey,JSON.stringify({state:'verification-pending',uris,backupKey,at:now()}));
+    }
+    const actual=await readItems(request,id);
+    if(!same(actual.map(t=>t.originalUri),uris))throw new Error('Yazma sonrası içerik/sıra doğrulanamadı. Otomatik tekrar yapılmadı.');
+    // Only fix the old exception-bearing description after the content is verified.
+    const verifiedTarget=await target();
+    if(verifiedTarget.name!==NAME||verifiedTarget.description!==DESCRIPTION){
+      await request('/playlists/'+id,{method:'PUT',body:JSON.stringify({name:NAME,description:DESCRIPTION})});
+      const metadata=await target();
+      if(metadata.name!==NAME||metadata.description!==DESCRIPTION)throw new Error('6 kayıt doğrulandı; playlist adı/açıklaması henüz doğrulanamadı.');
+    }
+    storage.setItem(resultKey,JSON.stringify({state:'verified',uris,at:now()}));
+    report('Bitti. 6 kayıt ve sıraları Spotify’dan yeniden okunarak doğrulandı.\nTSM, THM ve dönem dışı istisna yok.');
+    return {id,uris,state:'verified'};
+  }
+  const exported={NAME,DESCRIPTION,VERSION,COOLDOWN,records,validateCatalog,matches,retryAt,transport,readItems,build};
+  if(typeof module!=='undefined')module.exports=exported;
+  if(typeof document!=='undefined')root.addEventListener('load',()=>{
+    const button=document.getElementById('tr5060');if(!button)return;
+    const list=document.getElementById('tr50-sources');
+    if(list)for(const r of records){
+      const li=document.createElement('li'), a=document.createElement('a');
+      li.textContent=r.artist+' — '+r.title+' · '+r.catalog+' · ';
+      a.href=r.ad;a.textContent=r.adDate+' yeni plak ilanı';a.target='_blank';a.rel='noopener noreferrer';li.appendChild(a);list.appendChild(li);
+    }
+    let busy=false;
+    button.onclick=safe(async()=>{
+      if(busy)return;
+      if(location.origin!=='https://murat-spotify-manager.vercel.app')throw new Error('Spotify güncellemesini yayındaki Murat Spotify Manager üzerinden yap.');
+      if(!navigator.locks)throw new Error('Güvenli güncelleme için güncel Chrome veya Edge kullan.');
+      await navigator.locks.request('tr50-manager-build',{ifAvailable:true},async lock=>{
+        if(!lock)throw new Error('1950’ler işlemi başka bir sekmede sürüyor.');busy=true;
+        const controls=[...document.querySelectorAll('button,select')].map(e=>[e,e.disabled]);controls.forEach(([e])=>e.disabled=true);
+        const report=t=>{document.getElementById('tr5060-report').textContent=t;status(t);};
+        try{
+          const request=transport({fetch:root.fetch.bind(root),token,refresh,storage:localStorage});
+          const result=await build({id:document.getElementById('playlist').value,request,storage:localStorage,report});
+          const select=document.getElementById('playlist');let option=[...select.options].find(o=>o.value===result.id);
+          if(!option){option=document.createElement('option');option.value=result.id;select.appendChild(option);}
+          option.textContent=NAME+' (6)';select.value=result.id;
+        }catch(e){report(e.message);throw e;}
+        finally{controls.forEach(([e,disabled])=>e.disabled=disabled);busy=false;}
       });
-    }catch(_){}
-    return opt.value;
-  }
-
-  tr50Report('“' + TR50_PLAYLIST + '” playlisti oluşturuluyor...');
-  const j = await api('/me/playlists',{
-    method:'POST',
-    body:JSON.stringify({
-      name:TR50_PLAYLIST,
-      public:false,
-      description:"1950-1959 Batı müziği temelli Türkçe popüler müzik seçkisi. Sanat müziği, fantezi ve arabesk yok. Cahit Oben — Halimem (1965) yalnızca kullanıcı isteğiyle tarih dışı istisnadır."
-    })
+    });
   });
-  await playlists();
-  $('playlist').value = j.id;
-  return j.id;
-}
-
-async function buildTR5060(){
-  const btn = $('tr5060');
-  btn.disabled = true;
-  try{
-    const id = await tr50EnsurePlaylist();
-
-    const uris = TR50_CORE.map(x => x.uri);
-    tr50Report('8 doğrulanmış 1950’ler kaydı hazır. Cahit Oben — Halimem için Spotify kataloğu kontrol ediliyor...');
-
-    const halimem = await tr50FindHalimem();
-    if(halimem) uris.push(halimem);
-
-    tr50Report(uris.length + ' kayıt tek playlist olarak yazılıyor...');
-    await replaceWith(id, uris);
-
-    const note = halimem
-      ? ' Cahit Oben — Halimem de tek tarih dışı istisna olarak eklendi.'
-      : ' Cahit Oben — Halimem için Spotify’da güvenli orijinal eşleşme bulunamadı; yanlış bir cover koymadım.';
-
-    tr50Report(
-      'Bitti. ' + uris.length + ' kayıt. Sayı doldurma yok; yalnızca doğrulanmış 1950’ler omurgası.' + note,
-      'ok'
-    );
-
-    await playlists();
-    $('playlist').value = id;
-  } catch(e){
-    tr50Report(e.message, 'warn');
-    throw e;
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-window.addEventListener('load', () => {
-  const btn = $('tr5060');
-  if(btn) btn.onclick = safe(buildTR5060);
-});
+})(typeof window==='undefined'?globalThis:window);
