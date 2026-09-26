@@ -35,7 +35,7 @@ function fixture(options={}){
 }
 test('catalog requires in-decade original Turkish Western recordings and evidence',()=>{
   c.validateCatalog(c.records);
-  for(const change of [{release:[1949,1952]},{release:[1950,1960]},{release:[]},{release:[1952,1951]},{language:'en'},{tradition:'folk'},{tradition:'turkish-classical'},{recording:'rerecording'},{evidence:'composition-date'},{ad:''},{transfer:''}]){
+  for(const change of [{release:[1949,1952]},{release:[1950,1960]},{release:[]},{release:[1952,1951]},{language:'en'},{tradition:'folk'},{tradition:'turkish-classical'},{recording:'rerecording'},{evidence:'composition-date'},{dateSource:''},{transfer:''}]){
     assert.throws(()=>c.validateCatalog([{...c.records[0],...change}]));
   }
   assert.throws(()=>c.validateCatalog([c.records[0],c.records[0]]));
@@ -94,11 +94,11 @@ test('401 refresh is limited to one retry after explicit rejection',async()=>{
   let calls=0,refreshes=0;const request=c.transport({fetch:async()=>++calls===1?{status:401}:{status:204,ok:true},token:async()=> 'redacted',refresh:async()=>{refreshes++;return 'redacted';},storage:memory()});
   assert.equal(await request('/me'),null);assert.equal(calls,2);assert.equal(refreshes,1);
 });
-test('strict curation is enabled and contains 11 reviewed tracks',()=>{
+test('strict curation is enabled and contains 13 reviewed tracks',()=>{
   const fs=require('node:fs');
   assert.equal(c.CURATION_READY,true);
-  assert.equal(c.records.length,11);
+  assert.equal(c.records.length,13);
   const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
   assert.doesNotMatch(html,/id="tr5060"[^>]*disabled/);
-  assert.match(html,/11 doğrulanmış kayıt/);
+  assert.match(html,/13 doğrulanmış kayıt/);
 });
