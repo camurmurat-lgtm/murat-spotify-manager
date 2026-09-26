@@ -15,7 +15,7 @@
     t1952:'https://www.gastearsivi.com/gazete/hurriyet/1952-12-24/7',
     h1953:'https://www.gastearsivi.com/gazete/hurriyet/1953-08-17/5',
     m1955:'https://www.gastearsivi.com/gazete/milliyet2/1955-04-18/6',
-    c1955:'https://www.gastearsivi.com/gazete/cumhuriyet/1955-06-29/4',
+    c1955:'https://egazete.cumhuriyet.com.tr/katalog/192/1955/6/29/8',
     oriente:'https://oriente.de/en/catalogue/oriente-cds/221-old-world-tangos-vol-4-instanbul-tango-1927-1953-en',
     roll:'https://birartibir.org/wp-content/uploads/ROLL_2005_095.pdf',
     king:'https://music.apple.com/us/song/1803847722',
