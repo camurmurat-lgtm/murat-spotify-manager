@@ -10,17 +10,16 @@
   const names=[NAME,"Türkçe 50'ler","Türkçe 50'ler & 60'lar"].map(norm);
   const sources={
     h1950:'https://www.gastearsivi.com/gazete/hurriyet/1950-12-18/6',
-    h1951:'https://www.gastearsivi.com/gazete/hurriyet/1951-06-29/5',
     h1952:'https://www.gastearsivi.com/gazete/hurriyet/1952-10-08/6',
     t1952:'https://www.gastearsivi.com/gazete/hurriyet/1952-12-24/7',
     h1953:'https://www.gastearsivi.com/gazete/hurriyet/1953-08-17/5',
     m1955:'https://www.gastearsivi.com/gazete/milliyet2/1955-04-18/6',
     c1955:'https://egazete.cumhuriyet.com.tr/katalog/192/1955/6/29/8',
+    tangodj:'https://www.tango-dj.at/mailings/2013/2013-03-1.htm',
     oriente:'https://oriente.de/en/catalogue/oriente-cds/221-old-world-tangos-vol-4-instanbul-tango-1927-1953-en',
     roll:'https://birartibir.org/wp-content/uploads/ROLL_2005_095.pdf',
     king:'https://music.apple.com/us/song/1803847722',
-    tanyerliArchive:'https://www.tango-dj.at/archive/albums/Tas_Plaklarda_Tango-113631.html',
-    tasPlakAlbum:'https://open.spotify.com/album/3zfumlvWrYrOcb1fHlFh1q'
+    tasplak:'https://www.muzikhabercisi.com/2820/roportaj/erdener-koyuturk-ustata-saygi-projesini-anlatiyor.html'
   };
   // Admission rule: the original commercial release must be 1950-1959.
   // A later digital/CD release is accepted only as an archival transfer of that period recording.
@@ -166,7 +165,7 @@
     if(list)for(const r of records){
       const li=document.createElement('li'), a=document.createElement('a');
       li.textContent=r.artist+' — '+r.title+' · '+r.catalog+' · ';
-      a.href=r.ad;a.textContent=r.adDate+' yeni plak ilanı';a.target='_blank';a.rel='noopener noreferrer';li.appendChild(a);list.appendChild(li);
+      a.href=r.dateSource;a.textContent=r.adDate?r.adDate+' dönem kaynağı':'tarih/diskografi kaynağı';a.target='_blank';a.rel='noopener noreferrer';li.appendChild(a);list.appendChild(li);
     }
     if(!CURATION_READY){
       button.disabled=true;
