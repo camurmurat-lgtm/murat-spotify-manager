@@ -3,11 +3,11 @@ const assert=require('node:assert/strict');
 const c=require('../turkce_50_60.js');
 const id='123456789012345678901A';
 const memory=()=>{const values=new Map();return {values,getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v)};};
-const track=r=>({type:'track',id:r.id,uri:r.uri,name:r.spotifyTitle,artists:[{id:r.artistId}],album:{id:r.albumId,release_date:'2021-11-11'},duration_ms:r.duration,is_playable:true});
+const track=r=>({type:'track',id:r.id,uri:r.uri,name:r.spotifyTitle,artists:(r.artistIds||[r.artistId]).map(id=>({id})),album:{id:r.albumId,release_date:'2021-11-11'},duration_ms:r.duration,is_playable:true});
 function fixture(options={}){
   const storage=options.storage||memory(),calls=[];
   const original={uri:'spotify:track:AAAAAAAAAAAAAAAAAAAAAA',name:'Eski kayıt',type:'track'};
-  let items=options.items||[original],snapshot='before',name=c.NAME,description='Halimem istisna',writes=0,reads=0;
+  let items=options.items||[original],snapshot='before',name=c.NAME,description='Eski açıklama',writes=0,reads=0;
   async function request(path,opt={}){
     calls.push({path,...opt});
     if(path==='/me')return {id:'owner'};
@@ -45,11 +45,11 @@ test('digital reissue year allowed; unreviewed master/artist/relink rejected',()
   const r=c.records[0],t=track(r);assert.equal(c.matches(r,t),true);
   for(const change of [{name:'Another title'},{artists:[{id:'other'}]},{album:{id:'other'}},{linked_from:{uri:r.uri}},{is_playable:false},{restrictions:{reason:'market'}},{duration_ms:90000},{uri:'spotify:track:wrong'}])assert.equal(c.matches(r,{...t,...change}),false);
 });
-test('one content PUT, complete backup, readback and exception-free description',async()=>{
+test('one content PUT, complete backup, readback and strict description',async()=>{
   const f=fixture();const result=await f.run();assert.equal(result.state,'verified');assert.equal(f.writes(),1);
-  assert.equal(f.calls.filter(x=>x.path.startsWith('/tracks/')).length,6);
+  assert.equal(f.calls.filter(x=>x.path.startsWith('/tracks/')).length,c.records.length);
   assert.equal(f.calls.some(x=>x.path.includes('/search')),false);
-  const backup=JSON.parse([...f.storage.values].find(([k])=>k.includes(':backup:'))[1]);assert.equal(backup.description,'Halimem istisna');assert.equal(backup.items.length,1);
+  const backup=JSON.parse([...f.storage.values].find(([k])=>k.includes(':backup:'))[1]);assert.equal(backup.description,'Eski açıklama');assert.equal(backup.items.length,1);
   const meta=f.calls.find(x=>x.path==='/playlists/'+id&&x.method==='PUT');assert.equal(JSON.parse(meta.body).description,c.DESCRIPTION);
   await f.run();assert.equal(f.writes(),1,'second run does not replace again');
 });
@@ -94,19 +94,11 @@ test('401 refresh is limited to one retry after explicit rejection',async()=>{
   let calls=0,refreshes=0;const request=c.transport({fetch:async()=>++calls===1?{status:401}:{status:204,ok:true},token:async()=> 'redacted',refresh:async()=>{refreshes++;return 'redacted';},storage:memory()});
   assert.equal(await request('/me'),null);assert.equal(calls,2);assert.equal(refreshes,1);
 });
-
-test('incomplete curation cannot install a browser write handler',()=>{
-  const fs=require('node:fs'),vm=require('node:vm');
-  const button={disabled:false,textContent:''},report={textContent:''};
-  let onLoad;
-  const window={addEventListener:(event,fn)=>{assert.equal(event,'load');onLoad=fn;}};
-  const document={getElementById:id=>id==='tr5060'?button:id==='tr5060-report'?report:null};
-  // No safe/token/fetch globals: the incomplete path must stop before installing any writer.
-  vm.runInNewContext(fs.readFileSync(require.resolve('../turkce_50_60.js'),'utf8'),{window,document});
-  onLoad();
-  assert.equal(c.CURATION_READY,false);
-  assert.equal(button.disabled,true);
-  assert.equal(button.onclick,undefined);
-  assert.match(report.textContent,/tamamlanmadı/);
-  assert.match(fs.readFileSync(require.resolve('../index.html'),'utf8'),/id="tr5060"[^>]*disabled/);
+test('strict curation is enabled and contains 11 reviewed tracks',()=>{
+  const fs=require('node:fs');
+  assert.equal(c.CURATION_READY,true);
+  assert.equal(c.records.length,11);
+  const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
+  assert.doesNotMatch(html,/id="tr5060"[^>]*disabled/);
+  assert.match(html,/11 doğrulanmış kayıt/);
 });
